@@ -1,0 +1,3528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CONCORDE X — 协和式超音速客机三维航空工程交互平台</title>
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --panel:#F7F8FA;
+    --soft:#EEF1F4;
+    --ink:#20252B;
+    --muted:#66717D;
+    --line:#DDE2E7;
+    --line-soft:#E9EDF1;
+    --blue:#168BD2;
+    --blue-deep:#0E6DA8;
+    --blue-soft:#E8F4FB;
+    --green:#1F9D74;
+    --amber:#C88A1A;
+    --radius:10px;
+    --font:"Inter","Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --mono:"SFMono-Regular","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+    font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden;
+  }
+  button,input,select{font-family:inherit;color:inherit;}
+  button{cursor:pointer;}
+  button:focus-visible,input:focus-visible{outline:2px solid rgba(22,139,210,.45);outline-offset:1px;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#D5DCE2;border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  #app{
+    display:grid;height:100vh;min-height:0;
+    grid-template-columns:288px minmax(0,1fr) 324px;
+    grid-template-rows:62px minmax(0,1fr) 198px;
+    grid-template-areas:"top top top" "left center right" "bottom bottom bottom";
+    background:var(--bg);
+  }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    grid-area:top;display:flex;align-items:center;gap:20px;
+    padding:0 18px;background:#fff;border-bottom:1px solid var(--line);z-index:30;
+  }
+  .brand{display:flex;align-items:center;gap:11px;min-width:236px;}
+  .brand-mark{
+    width:36px;height:36px;border-radius:9px;background:linear-gradient(145deg,#168BD2,#0B5E94);
+    display:grid;place-items:center;box-shadow:0 3px 9px rgba(11,94,148,.18);flex:0 0 auto;
+  }
+  .brand-mark svg{width:24px;height:24px;display:block;}
+  .brand-title{font-size:17px;font-weight:750;letter-spacing:.12em;line-height:1.1;}
+  .brand-title span{color:var(--blue);font-weight:800;}
+  .brand-sub{font-size:9px;letter-spacing:.06em;color:var(--muted);margin-top:3px;white-space:nowrap;}
+  .main-nav{display:flex;align-items:stretch;gap:2px;height:100%;flex:1;justify-content:center;}
+  .nav-btn{
+    border:0;background:transparent;color:var(--muted);padding:0 13px;font-size:12.5px;
+    display:flex;align-items:center;gap:7px;position:relative;white-space:nowrap;border-radius:0;
+    transition:color .16s,background .16s;
+  }
+  .nav-btn small{font-size:8px;font-family:var(--mono);letter-spacing:.08em;color:#9AA5AF;display:block;line-height:1;}
+  .nav-btn .nav-label{display:flex;flex-direction:column;align-items:flex-start;gap:3px;}
+  .nav-btn:hover{color:var(--ink);background:#FAFBFC;}
+  .nav-btn.active{color:var(--blue);background:linear-gradient(180deg,rgba(22,139,210,.02),rgba(22,139,210,.07));}
+  .nav-btn.active::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:2px;background:var(--blue);border-radius:2px 2px 0 0;}
+  .nav-btn.active small{color:#75B8DF;}
+  .top-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+  .btn{
+    border:1px solid var(--line);background:#fff;border-radius:7px;padding:8px 12px;
+    font-size:12px;font-weight:600;color:#39434D;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    transition:border-color .15s,background .15s,box-shadow .15s,color .15s;white-space:nowrap;
+  }
+  .btn:hover{border-color:#C3CDD6;background:#FBFCFD;box-shadow:0 1px 3px rgba(30,45,60,.05);}
+  .btn:active{transform:translateY(1px);}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 2px 7px rgba(22,139,210,.22);}
+  .btn.primary:hover{background:#0F7FC2;border-color:#0F7FC2;}
+  .btn.dark{background:#242A31;border-color:#242A31;color:#fff;}
+  .btn.dark:hover{background:#151A1F;}
+  .btn.sm{padding:6px 9px;font-size:11.5px;border-radius:6px;}
+  .btn.icon{width:34px;height:34px;padding:0;}
+  .btn.active{background:var(--blue-soft);border-color:#B9DDF2;color:var(--blue-deep);}
+  .btn[disabled]{opacity:.42;cursor:not-allowed;}
+  .present-btn{
+    background:linear-gradient(135deg,#168BD2,#0E6DA8);border:0;color:#fff;border-radius:7px;
+    padding:9px 13px;font-size:10.5px;font-weight:750;letter-spacing:.1em;display:flex;align-items:center;gap:7px;
+    box-shadow:0 3px 10px rgba(14,109,168,.2);
+  }
+  .present-btn:hover{filter:brightness(1.06);}
+  .present-btn svg{width:14px;height:14px;}
+
+  /* ---------- SIDE PANELS ---------- */
+  .side-panel{
+    background:var(--panel);overflow-y:auto;overscroll-behavior:contain;min-height:0;
+  }
+  .left-panel{grid-area:left;border-right:1px solid var(--line);}
+  .right-panel{grid-area:right;border-left:1px solid var(--line);}
+  .panel-section{padding:12px 16px;border-bottom:1px solid var(--line-soft);}
+  .panel-heading{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;
+    font-size:10px;font-weight:750;letter-spacing:.11em;color:#7A858F;text-transform:uppercase;
+  }
+  .panel-heading em{font-style:normal;font-weight:500;font-family:var(--mono);font-size:9px;color:#A4AEB7;letter-spacing:.05em;}
+  .panel-note{
+    margin-top:11px;padding:8px 9px;background:#fff;border:1px solid var(--line-soft);border-radius:6px;
+    font-size:10.5px;line-height:1.5;color:#84909A;
+  }
+  .panel-note b{color:#59646E;font-weight:650;}
+
+  /* tree */
+  .tree{display:flex;flex-direction:column;gap:1px;}
+  .tree-item{
+    display:flex;align-items:center;gap:9px;padding:6px 7px;border-radius:6px;cursor:pointer;
+    border:1px solid transparent;transition:background .12s,border-color .12s;
+  }
+  .tree-item:hover{background:#fff;border-color:var(--line-soft);}
+  .tree-item.selected{background:#fff;border-color:#BFD9E9;box-shadow:0 1px 3px rgba(22,139,210,.07);}
+  .tree-item .twisty{width:10px;height:10px;display:grid;place-items:center;color:#A4AEB7;font-size:9px;flex:0 0 auto;}
+  .tree-item .t-name{flex:1;min-width:0;font-size:12px;font-weight:600;color:#38424C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tree-item .t-en{font-family:var(--mono);font-size:8px;color:#A3ADB6;font-weight:500;letter-spacing:.04em;display:block;margin-top:1px;}
+  .tree-item .part-dot{width:6px;height:6px;border-radius:50%;background:#C4CDD5;flex:0 0 auto;}
+  .tree-item.selected .part-dot{background:var(--blue);box-shadow:0 0 0 3px rgba(22,139,210,.1);}
+  .tree-item.sub .t-name{font-weight:500;color:#5B6671;}
+  .tree-item.sub{padding-left:20px;}
+
+  /* switch */
+  .switch-row{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;gap:12px;}
+  .switch-row .sw-label{font-size:12px;font-weight:550;color:#46515C;display:flex;align-items:center;gap:7px;}
+  .sw-label .sw-en{font-size:8px;font-family:var(--mono);letter-spacing:.05em;color:#A6B0B9;display:block;font-weight:400;}
+  .switch{position:relative;width:34px;height:19px;flex:0 0 auto;background:#D4DBE1;border-radius:20px;transition:background .16s;padding:0;border:0;}
+  .switch::after{content:"";position:absolute;left:2px;top:2px;width:15px;height:15px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.16);transition:transform .16s;}
+  .switch.on{background:var(--blue);}
+  .switch.on::after{transform:translateX(15px);}
+  .switch:disabled{opacity:.4;cursor:not-allowed;}
+  .struct-chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px;}
+  .struct-chips .chip{
+    border:1px solid var(--line);background:#fff;border-radius:4px;padding:3px 6px;font-size:9px;
+    color:#7C8893;font-weight:600;letter-spacing:.02em;transition:.12s;
+  }
+  .struct-chips .chip:hover{border-color:#BFD9E9;color:var(--blue-deep);}
+  .struct-chips .chip.on{background:var(--blue-soft);border-color:#C4E3F5;color:var(--blue-deep);}
+  .struct-chips .chip.off{opacity:.5;text-decoration:line-through;}
+  .range-row{padding:8px 2px 4px;}
+  .range-top{display:flex;justify-content:space-between;font-size:10.5px;color:#5E6973;margin-bottom:5px;}
+  .range-top output{font-family:var(--mono);font-size:10px;color:var(--blue-deep);font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:3px;background:#D8DFE5;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:13px;height:13px;border-radius:50%;background:#fff;
+    border:2px solid var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--blue);}
+
+  /* view grid */
+  .view-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+  .view-btn{
+    border:1px solid var(--line);background:#fff;border-radius:6px;height:39px;padding:3px 2px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#5C6772;
+    font-size:10px;font-weight:550;transition:.13s;
+  }
+  .view-btn svg{width:15px;height:15px;opacity:.7;}
+  .view-btn:hover{border-color:#BFD9E9;color:var(--blue-deep);background:#FBFDFF;}
+  .view-btn.wide{grid-column:span 2;flex-direction:row;gap:6px;font-size:11px;}
+  .view-btn.wide svg{width:14px;height:14px;}
+
+  /* right panel */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5;}
+  .tab{
+    flex:1;border:0;background:#fff;padding:12px 4px 10px;font-size:11.5px;font-weight:600;color:#8A959F;
+    position:relative;white-space:nowrap;
+  }
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:var(--blue-deep);}
+  .tab.active::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:2px;background:var(--blue);}
+  .tab-pane{display:none;padding:14px 16px 20px;}
+  .tab-pane.active{display:block;}
+  .part-kicker{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .part-kicker span{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--blue-deep);background:var(--blue-soft);border:1px solid #CDE7F6;border-radius:4px;padding:2px 5px;}
+  .part-kicker .sel-state{font-size:9px;color:#9AA5AF;font-family:var(--mono);}
+  .part-title{font-size:19px;font-weight:720;letter-spacing:-.01em;margin:2px 0 1px;line-height:1.25;}
+  .part-en{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:#8D98A2;text-transform:uppercase;margin-bottom:10px;}
+  .part-desc{font-size:11.5px;line-height:1.65;color:#5B6671;margin:0 0 12px;}
+  .param-title{font-size:9.5px;font-weight:750;letter-spacing:.1em;color:#8B969F;margin:14px 0 7px;text-transform:uppercase;}
+  .param-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;}
+  .param-row{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;border-bottom:1px solid var(--line-soft);font-size:11px;}
+  .param-row:last-child{border-bottom:0;}
+  .param-row .k{color:#7C8791;}
+  .param-row .v{font-family:var(--mono);font-size:10.5px;color:#333D46;font-weight:600;text-align:right;}
+  .placeholder{color:#98A3AC;font-size:11.5px;line-height:1.7;background:#fff;border:1px dashed #D7DEE4;border-radius:8px;padding:18px 14px;text-align:center;margin-top:6px;}
+  .spec-table{width:100%;border-collapse:collapse;font-size:11px;background:#fff;border:1px solid var(--line);border-radius:7px;overflow:hidden;}
+  .spec-table tr{border-bottom:1px solid var(--line-soft);}
+  .spec-table tr:last-child{border-bottom:0;}
+  .spec-table td{padding:7px 9px;color:#5E6973;}
+  .spec-table td:last-child{text-align:right;font-family:var(--mono);font-size:10px;color:#2E3841;font-weight:600;}
+  .data-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .data-cell{background:#fff;border:1px solid var(--line);border-radius:7px;padding:8px 9px;min-width:0;}
+  .data-cell .dk{font-size:9px;letter-spacing:.05em;color:#8D98A2;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .data-cell .dv{font-family:var(--mono);font-size:15px;font-weight:650;color:#27313A;margin-top:2px;white-space:nowrap;}
+  .data-cell .dv small{font-size:8.5px;font-weight:500;color:#94A0AA;margin-left:2px;}
+  .data-cell.wide{grid-column:span 2;}
+  .sim-flag{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:9.5px;color:#8C97A0;}
+  .sim-flag::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px rgba(200,138,26,.1);}
+  .mini-bar{height:3px;border-radius:3px;background:#E4E9ED;overflow:hidden;margin-top:5px;}
+  .mini-bar i{display:block;height:100%;background:var(--blue);width:0%;transition:width .2s linear;}
+
+  /* ---------- VIEWPORT ---------- */
+  #viewport{
+    grid-area:center;position:relative;background:#fff;min-width:0;min-height:0;overflow:hidden;
+  }
+  #scene{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;outline:none;}
+  .vp-chrome{position:absolute;pointer-events:none;z-index:6;}
+  .vp-top-left{top:14px;left:16px;display:flex;align-items:center;gap:8px;}
+  .mode-badge{
+    pointer-events:none;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:5px;
+    padding:4px 8px;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:#59646E;
+    backdrop-filter:blur(6px);box-shadow:0 1px 3px rgba(20,35,50,.04);
+  }
+  .mode-badge strong{color:var(--blue-deep);font-weight:700;}
+  .vp-top-right{top:14px;right:16px;display:flex;gap:6px;}
+  .vp-chip{
+    pointer-events:none;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:5px;
+    padding:4px 8px;font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;color:#7B8791;backdrop-filter:blur(6px);
+  }
+  .vp-chip .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:1px;}
+  .vp-hint{
+    left:16px;bottom:14px;display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.86);
+    border:1px solid var(--line);border-radius:6px;padding:7px 10px;backdrop-filter:blur(7px);
+    font-size:9.5px;color:#7B8791;max-width:calc(100% - 32px);flex-wrap:wrap;
+  }
+  .vp-hint span{display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  .vp-hint b{font-weight:650;color:#4A5560;}
+  .kbd{font-family:var(--mono);font-size:8.5px;border:1px solid #D6DDE3;border-bottom-width:2px;background:#fff;border-radius:3px;padding:0 4px;color:#5F6A74;}
+  .scalebar{
+    right:16px;bottom:14px;display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-family:var(--mono);font-size:8px;color:#98A3AC;letter-spacing:.04em;
+  }
+  .scalebar i{display:block;width:74px;height:5px;border:1px solid #B9C3CC;border-top:0;position:relative;}
+  .scalebar i::before,.scalebar i::after{content:"";position:absolute;bottom:0;height:7px;width:1px;background:#B9C3CC;left:0;}
+  .scalebar i::after{left:auto;right:0;}
+  .present-mark{
+    position:absolute;top:22px;left:24px;z-index:8;display:none;pointer-events:none;
+  }
+  .present-mark .pm-title{font-size:22px;font-weight:800;letter-spacing:.16em;}
+  .present-mark .pm-sub{font-size:9px;letter-spacing:.14em;color:#7B8791;margin-top:4px;font-family:var(--mono);}
+  .present-exit{
+    position:absolute;top:20px;right:22px;z-index:9;display:none;
+  }
+  .engine-legend{
+    position:absolute;left:16px;top:52px;z-index:7;display:none;width:218px;
+    background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:8px;
+    box-shadow:0 4px 18px rgba(30,45,60,.07);backdrop-filter:blur(8px);padding:10px 11px;
+    pointer-events:none;
+  }
+  .engine-legend .el-head{font-size:9px;font-weight:750;letter-spacing:.1em;color:#4D5964;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line-soft);padding-bottom:7px;margin-bottom:5px;}
+  .engine-legend .el-head span{font-family:var(--mono);font-weight:500;font-size:7.5px;color:#99A4AE;letter-spacing:.06em;}
+  .engine-legend .el-row{display:flex;align-items:baseline;gap:7px;padding:3px 0;font-size:10px;color:#4E5964;}
+  .engine-legend .el-row b{font-family:var(--mono);font-size:8px;color:var(--blue);font-weight:700;min-width:16px;}
+  .engine-legend .el-row em{font-style:normal;font-family:var(--mono);font-size:7.5px;color:#A0AAB3;margin-left:auto;letter-spacing:.03em;}
+  .engine-legend .el-foot{margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:8px;color:#98A3AC;font-family:var(--mono);letter-spacing:.03em;}
+  .vp-status{
+    position:absolute;left:50%;bottom:15px;transform:translateX(-50%);z-index:7;pointer-events:none;
+    font-family:var(--mono);font-size:9px;color:#9AA5AF;letter-spacing:.08em;white-space:nowrap;
+  }
+
+  /* loader */
+  #loader{position:absolute;inset:0;z-index:20;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .4s;}
+  #loader.hidden{opacity:0;pointer-events:none;}
+  .loader-ring{width:34px;height:34px;border:2px solid #E3E9EE;border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loader-title{font-size:11px;font-weight:650;letter-spacing:.14em;color:#4E5A65;}
+  .loader-sub{font-size:9.5px;color:#9AA5AF;font-family:var(--mono);letter-spacing:.04em;}
+  .loader-error{display:none;max-width:420px;text-align:center;line-height:1.7;color:#8A4B4B;font-size:11px;background:#FFF7F7;border:1px solid #F0D6D6;border-radius:8px;padding:12px 16px;}
+  .loader-error.show{display:block;}
+
+  /* toast */
+  #toast{
+    position:fixed;left:50%;bottom:218px;transform:translate(-50%,10px);z-index:100;opacity:0;pointer-events:none;
+    background:rgba(35,42,49,.94);color:#fff;font-size:11px;padding:8px 14px;border-radius:6px;
+    transition:opacity .2s,transform .2s;box-shadow:0 6px 22px rgba(20,30,40,.2);white-space:nowrap;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0);}
+  #toast b{color:#9DD8F7;font-weight:650;}
+
+  /* ---------- BOTTOM DOCK ---------- */
+  .bottom-dock{
+    grid-area:bottom;background:#fff;border-top:1px solid var(--line);z-index:20;
+    display:flex;flex-direction:column;min-height:0;padding:10px 16px 9px;
+  }
+  .dock-controls{display:flex;align-items:stretch;gap:0;flex:1;min-height:0;}
+  .ctrl-group{
+    padding:0 14px;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:0;
+  }
+  .ctrl-group:first-child{padding-left:2px;}
+  .ctrl-group:last-child{border-right:0;}
+  .ctrl-head{display:flex;align-items:center;gap:6px;justify-content:space-between;white-space:nowrap;}
+  .ctrl-title{font-size:9px;font-weight:750;letter-spacing:.1em;color:#8A959F;text-transform:uppercase;}
+  .ctrl-state{font-family:var(--mono);font-size:8.5px;color:#9AA5AF;white-space:nowrap;}
+  .ctrl-state.live{color:var(--blue-deep);}
+  .seg{display:flex;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:2px;gap:2px;}
+  .seg button{
+    border:0;background:transparent;border-radius:4px;padding:5px 8px;font-size:10.5px;font-weight:600;color:#69747E;white-space:nowrap;
+    transition:.12s;
+  }
+  .seg button:hover{background:#fff;color:#2E3841;}
+  .seg button.active{background:#fff;color:var(--blue-deep);box-shadow:0 1px 2px rgba(25,40,55,.1);}
+  .seg button[disabled]{opacity:.35;cursor:not-allowed;}
+  .btn-row{display:flex;gap:5px;align-items:center;}
+  .rpm-wrap{display:flex;align-items:center;gap:7px;min-width:148px;}
+  .rpm-track{flex:1;height:4px;background:#E4E9ED;border-radius:3px;overflow:hidden;}
+  .rpm-track i{display:block;height:100%;background:linear-gradient(90deg,#168BD2,#5DB8E8);width:0%;transition:width .12s linear;}
+  .rpm-val{font-family:var(--mono);font-size:9px;color:#5E6973;min-width:30px;text-align:right;}
+  .att-wide{min-width:246px;}
+  .att-sliders{display:flex;gap:10px;}
+  .att-item{flex:1;min-width:70px;}
+  .att-item .lbl{display:flex;justify-content:space-between;font-size:8.5px;color:#8A959F;margin-bottom:3px;font-family:var(--mono);}
+  .att-item .lbl output{color:#5A6671;}
+  .att-item input[type=range]{height:2px;}
+  .att-item input[type=range]::-webkit-slider-thumb{width:10px;height:10px;border-width:1.5px;}
+
+  .timeline-row{
+    margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:10px;
+  }
+  .play-btn{
+    width:27px;height:27px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;flex:0 0 auto;
+    color:var(--blue-deep);transition:.14s;
+  }
+  .play-btn:hover{background:var(--blue-soft);border-color:#B9DDF2;}
+  .play-btn svg{width:10px;height:10px;}
+  .tl-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+  .tl-track{
+    position:relative;height:18px;display:flex;border-radius:4px;overflow:hidden;background:var(--soft);border:1px solid var(--line-soft);
+    cursor:pointer;
+  }
+  .tl-seg{
+    flex:1;position:relative;border-right:1px solid #fff;display:flex;align-items:center;padding-left:7px;
+    font-size:8px;color:#93A0AA;letter-spacing:.04em;white-space:nowrap;overflow:hidden;
+  }
+  .tl-seg:last-child{border-right:0;}
+  .tl-seg.active{color:var(--blue-deep);background:#F2FAFF;}
+  .tl-fill{
+    position:absolute;left:0;top:0;bottom:0;background:rgba(22,139,210,.16);border-right:2px solid var(--blue);
+    width:0%;pointer-events:none;z-index:2;
+  }
+  .tl-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;color:#9AA5AF;letter-spacing:.04em;}
+  .tl-meta b{font-weight:600;color:#6A7580;}
+  .phase-desc{font-size:9px;color:#A0AAB3;font-family:var(--mono);min-width:156px;text-align:right;white-space:nowrap;}
+
+  /* presentation mode */
+  body.presentation #app{grid-template-columns:1fr;grid-template-rows:1fr;grid-template-areas:"center";}
+  body.presentation .topbar,body.presentation .left-panel,body.presentation .right-panel,body.presentation .bottom-dock{display:none;}
+  body.presentation #viewport{grid-area:center;}
+  body.presentation .present-mark,body.presentation .present-exit{display:flex;}
+  body.presentation .present-exit{display:block;}
+  body.presentation .present-mark{display:block;}
+  body.presentation .vp-hint{opacity:.7;}
+  body.presentation .vp-top-left,body.presentation .vp-top-right{display:none;}
+  body.presentation .vp-status{bottom:20px;}
+
+  @media (max-width:1500px){
+    #app{grid-template-columns:256px minmax(0,1fr) 296px;grid-template-rows:58px minmax(0,1fr) 194px;}
+    .brand{min-width:208px;}
+    .nav-btn{padding:0 9px;font-size:11.5px;}
+    .nav-btn small{display:none;}
+    .ctrl-group{padding:0 9px;}
+    .att-wide{min-width:206px;}
+  }
+  @media (max-width:1180px){
+    #app{grid-template-columns:0 minmax(0,1fr) 0;grid-template-rows:56px minmax(0,1fr) 190px;}
+    .left-panel,.right-panel{display:none;}
+    .nav-btn{padding:0 8px;}
+    .brand-sub{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ================= TOP ================= -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M3 23.5L16 7l13 16.5-13-5.2L3 23.5Z" fill="#fff" opacity=".96"/>
+          <path d="M16 7v12.1" stroke="#0B5E94" stroke-width="1.2" opacity=".55"/>
+          <path d="M9.5 21.5L16 12l6.5 9.5" stroke="#0B5E94" stroke-width="1.2" opacity=".4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">CONCORDE <span>X</span></div>
+        <div class="brand-sub">协和式超音速客机三维航空工程交互平台</div>
+      </div>
+    </div>
+
+    <nav class="main-nav" id="mainNav" aria-label="主导航">
+      <button class="nav-btn active" data-mode="overview"><span class="nav-label">整机展示<small>AIRCRAFT</small></span></button>
+      <button class="nav-btn" data-mode="structure"><span class="nav-label">工程结构<small>STRUCTURE</small></span></button>
+      <button class="nav-btn" data-mode="explode"><span class="nav-label">爆炸视图<small>EXPLODED</small></span></button>
+      <button class="nav-btn" data-mode="engine"><span class="nav-label">发动机<small>PROPULSION</small></span></button>
+      <button class="nav-btn" data-mode="flight"><span class="nav-label">飞行模拟<small>FLIGHT SIM</small></span></button>
+      <button class="nav-btn" data-mode="data"><span class="nav-label">数据中心<small>DATA</small></span></button>
+    </nav>
+
+    <div class="top-actions">
+      <button class="present-btn" id="btnPresent" title="进入演示模式">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+        PRESENTATION
+      </button>
+      <button class="btn icon" id="btnFull" title="全屏显示（F11）" aria-label="全屏">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= LEFT ================= -->
+  <aside class="left-panel">
+    <section class="panel-section">
+      <div class="panel-heading"><span>飞机结构目录</span><em>STRUCTURE TREE</em></div>
+      <div class="tree" id="structureTree">
+        <div class="tree-item selected" data-part="aircraft">
+          <span class="twisty">▾</span>
+          <div class="t-name">整机总览<span class="t-en">CONCORDE / G-BOAC</span></div>
+          <span class="part-dot"></span>
+        </div>
+        <div class="tree-item sub" data-part="fuselage"><span class="twisty"></span><div class="t-name">机身结构<span class="t-en">FUSELAGE</span></div><span class="part-dot"></span></div>
+        <div class="tree-item sub" data-part="nose"><span class="twisty"></span><div class="t-name">下垂式机头<span class="t-en">DROOP NOSE</span></div><span class="part-dot"></span></div>
+        <div class="tree-item sub" data-part="wing"><span class="twisty"></span><div class="t-name">修形三角翼<span class="t-en">OGIVAL DELTA WING</span></div><span class="part-dot"></span></div>
+        <div class="tree-item sub" data-part="spar_main"><span class="twisty"></span><div class="t-name">机翼内部结构<span class="t-en">WING STRUCTURE</span></div><span class="part-dot"></span></div>
+        <div class="tree-item sub" data-part="fin"><span class="twisty"></span><div class="t-name">垂直尾翼<span class="t-en">VERTICAL FIN</span></div><span class="part-dot"></span></div>
+        <div class="tree-item sub" data-part="nacelle"><span class="twisty"></span><div class="t-name">发动机短舱 ×4<span class="t-en">NACELLES</span></div><span class="part-dot"></span></div>
+        <div class="tree-item sub" data-part="gear_main"><span class="twisty"></span><div class="t-name">起落架系统<span class="t-en">LANDING GEAR</span></div><span class="part-dot"></span></div>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <div class="panel-heading"><span>视角控制</span><em>CAMERA</em></div>
+      <div class="view-grid">
+        <button class="view-btn" data-view="front"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M4 12h5M15 12h5M12 4v5M12 15v5"/></svg>前视图</button>
+        <button class="view-btn" data-view="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M4 12h5M15 12h5M12 4v5M12 15v5"/><path d="M8 8l8 8" opacity=".4"/></svg>后视图</button>
+        <button class="view-btn" data-view="left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M12 5v14" opacity=".35"/><path d="M7 7l-3 5 3 5"/></svg>左视图</button>
+        <button class="view-btn" data-view="right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M12 5v14" opacity=".35"/><path d="M17 7l3 5-3 5"/></svg>右视图</button>
+        <button class="view-btn" data-view="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l5 8-5 10-5-10 5-8Z"/></svg>俯视图</button>
+        <button class="view-btn" data-view="bottom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l5 8-5 10-5-10 5-8Z" opacity=".45"/><path d="M7 11h10"/></svg>仰视图</button>
+        <button class="view-btn" data-view="iso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>45° 斜视</button>
+        <button class="view-btn" data-view="reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10a8 8 0 1 1 2 7"/><path d="M4 4v6h6"/></svg>恢复视角</button>
+        <button class="view-btn wide" data-view="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/><circle cx="12" cy="12" r="2.5"/></svg>适配整机 FIT VIEW</button>
+        <button class="view-btn wide" data-view="resetAll"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>恢复默认场景</button>
+      </div>
+    </section>
+    <section class="panel-section">
+      <div class="panel-heading"><span>显示控制</span><em>DISPLAY</em></div>
+      <div class="switch-row">
+        <div class="sw-label">透明蒙皮<span class="sw-en">TRANSPARENCY</span></div>
+        <button class="switch" id="swTransparent" role="switch" aria-checked="false" title="透明蒙皮"></button>
+      </div>
+      <div class="switch-row">
+        <div class="sw-label">剖切模式<span class="sw-en">SECTION CUT</span></div>
+        <button class="switch" id="swCut" role="switch" aria-checked="false" title="剖切模式"></button>
+      </div>
+      <div class="range-row" id="cutRow" style="opacity:.45;">
+        <div class="range-top"><span>剖切位置 X</span><output id="cutVal">0.0 m</output></div>
+        <input type="range" id="cutRange" min="-7" max="7" step="0.1" value="0" disabled />
+      </div>
+      <div class="switch-row">
+        <div class="sw-label">工程内部结构<span class="sw-en">INTERNAL STRUCTURE</span></div>
+        <button class="switch" id="swInternal" role="switch" aria-checked="false" title="工程内部结构"></button>
+      </div>
+      <div class="struct-chips" id="structChips">
+        <button class="chip on" data-struct="wing" title="显示/隐藏机翼蒙皮">蒙皮</button>
+        <button class="chip on" data-struct="spar_main" title="显示/隐藏主翼梁">主翼梁</button>
+        <button class="chip on" data-struct="spar_rear" title="显示/隐藏后翼梁">后翼梁</button>
+        <button class="chip on" data-struct="ribs" title="显示/隐藏翼肋">翼肋</button>
+        <button class="chip on" data-struct="stringers" title="显示/隐藏纵向加强件">长桁</button>
+      </div>
+      <div class="range-row">
+        <div class="range-top"><span>爆炸拆解程度</span><output id="explodeVal">0%</output></div>
+        <input type="range" id="explodeRange" min="0" max="100" step="1" value="0" />
+      </div>
+      <div class="panel-note"><b>工程示意：</b>机翼内部翼梁、翼肋与纵梁为结构逻辑示意，非制造级 CAD 数据。所有飞行数据均为模拟输出。<br><b>网络：</b>Three.js 由 CDN 在线加载，首次打开需要网络连接。</div>
+    </section>
+
+  </aside>
+
+  <!-- ================= VIEWPORT ================= -->
+  <main id="viewport">
+    <canvas id="scene"></canvas>
+
+    <div class="vp-chrome vp-top-left">
+      <div class="mode-badge" id="modeBadge"><strong>CONCORDE X</strong> · AIRCRAFT OVERVIEW</div>
+    </div>
+    <div class="vp-chrome vp-top-right">
+      <div class="vp-chip"><span class="dot"></span>ENGINEERING VIEW</div>
+      <div class="vp-chip" id="fpsChip">WEBGL · LIVE 3D</div>
+    </div>
+    <div class="vp-chrome vp-hint">
+      <span><span class="kbd">LMB</span> 旋转</span>
+      <span><span class="kbd">WHEEL</span> 缩放</span>
+      <span><span class="kbd">RMB</span> 平移</span>
+      <span><b>点击部件</b> 查看工程信息</span>
+    </div>
+    <div class="vp-chrome scalebar"><span id="scaleLabel">10 m</span><i></i></div>
+    <div class="vp-chrome vp-status" id="vpStatus">MODEL READY · OGIVAL DELTA WING · 4 × OLYMPUS 593</div>
+
+    <div class="engine-legend" id="engineLegend">
+      <div class="el-head">OLYMPUS 593 <span>STATION MAP</span></div>
+      <div class="el-row"><b>01</b><span>可变几何进气道</span><em>INTAKE</em></div>
+      <div class="el-row"><b>02</b><span>压气机</span><em>COMPRESSOR</em></div>
+      <div class="el-row"><b>03</b><span>燃烧室</span><em>COMBUSTOR</em></div>
+      <div class="el-row"><b>04</b><span>涡轮</span><em>TURBINE</em></div>
+      <div class="el-row"><b>05</b><span>加力燃烧室</span><em>AFTERBURNER</em></div>
+      <div class="el-row"><b>06</b><span>喷管</span><em>NOZZLE</em></div>
+      <div class="el-foot">半剖切展示 · 工程示意结构 · 点击部件查看说明</div>
+    </div>
+
+    <div class="present-mark">
+      <div class="pm-title">CONCORDE <span style="color:#168BD2">X</span></div>
+      <div class="pm-sub">AEROSPACE ENGINEERING PLATFORM · PRESENTATION MODE</div>
+    </div>
+    <button class="btn present-exit" id="btnPresentExit">退出演示 ESC</button>
+
+    <div id="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-title">正在构建三维航空工程场景</div>
+      <div class="loader-sub" id="loaderSub">LOADING THREE.JS / GEOMETRY / LIGHTING</div>
+      <div class="loader-error" id="loaderError"></div>
+    </div>
+  </main>
+
+  <!-- ================= RIGHT ================= -->
+  <aside class="right-panel">
+    <div class="tabs" id="rightTabs">
+      <button class="tab active" data-tab="info">部件信息</button>
+      <button class="tab" data-tab="spec">工程参数</button>
+      <button class="tab" data-tab="flight">飞行数据</button>
+    </div>
+
+    <div class="tab-pane active" id="pane-info">
+      <div id="partInfo">
+        <div class="part-kicker"><span>AC-001</span><span class="sel-state">未选择部件</span></div>
+        <div class="part-title">整机总览</div>
+        <div class="part-en">Concorde · Ogival Delta Wing Aircraft</div>
+        <p class="part-desc">协和式是唯一投入商业运营的超音速客机。本平台以实时三维模型呈现其无尾修形三角翼、四台 Olympus 593 加力涡喷发动机、下垂式机头与可收放起落架。点击三维模型或左侧结构目录中的部件以读取工程信息。</p>
+        <div class="param-title">Key Parameters · 主要参数</div>
+        <div class="param-list">
+          <div class="param-row"><span class="k">机身长度</span><span class="v">61.66 m</span></div>
+          <div class="param-row"><span class="k">翼展</span><span class="v">25.60 m</span></div>
+          <div class="param-row"><span class="k">参考机翼面积</span><span class="v">358 m²</span></div>
+          <div class="param-row"><span class="k">最大巡航马赫数</span><span class="v">Mach 2.04</span></div>
+        </div>
+        <div class="param-title">Interaction · 交互</div>
+        <div class="param-list">
+          <div class="param-row"><span class="k">旋转 / 缩放 / 平移</span><span class="v">LMB / WHEEL / RMB</span></div>
+          <div class="param-row"><span class="k">当前模式</span><span class="v" id="infoMode">整机展示</span></div>
+        </div>
+        <div class="sim-flag">三维模型与结构为工程示意，不用于真实制造或飞行。</div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="pane-spec">
+      <div class="panel-heading" style="margin-bottom:8px;"><span>飞机工程参数</span><em>AIRCRAFT SPEC</em></div>
+      <table class="spec-table">
+        <tr><td>机身长度</td><td>61.66 m</td></tr>
+        <tr><td>翼展</td><td>25.60 m</td></tr>
+        <tr><td>飞机高度</td><td>12.20 m</td></tr>
+        <tr><td>机翼参考面积</td><td>358 m²</td></tr>
+        <tr><td>前缘后掠角</td><td>约 60°</td></tr>
+        <tr><td>最大巡航速度</td><td>Mach 2.04</td></tr>
+        <tr><td>典型巡航高度</td><td>18,000 m</td></tr>
+        <tr><td>动力装置</td><td>4 × Olympus 593</td></tr>
+        <tr><td>单台加力推力</td><td>约 169 kN</td></tr>
+        <tr><td>燃油容量</td><td>约 119,500 L</td></tr>
+        <tr><td>航程</td><td>约 7,250 km</td></tr>
+        <tr><td>载客量</td><td>92 – 128</td></tr>
+      </table>
+      <div class="panel-note" style="margin-top:12px;"><b>资料来源：</b>主要尺寸与性能取自公开航空资料，用于比例与信息展示；三维几何、内部结构与发动机剖面为工程示意重建。</div>
+      <div class="param-title">模型结构统计</div>
+      <div class="param-list">
+        <div class="param-row"><span class="k">机翼布局</span><span class="v">Ogival Delta · 无尾</span></div>
+        <div class="param-row"><span class="k">发动机布局</span><span class="v">4 × 加力涡喷</span></div>
+        <div class="param-row"><span class="k">机头机构</span><span class="v">下垂 0° / 5° / 12.5°</span></div>
+        <div class="param-row"><span class="k">起落架</span><span class="v">前三点 · 可收放</span></div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="pane-flight">
+      <div class="panel-heading" style="margin-bottom:8px;"><span>实时模拟数据</span><em>SIMULATED</em></div>
+      <div class="data-grid">
+        <div class="data-cell"><div class="dk">空速 / SPEED</div><div class="dv"><span id="dSpeed">0</span><small>km/h</small></div></div>
+        <div class="data-cell"><div class="dk">马赫数 / MACH</div><div class="dv" id="dMach">0.00</div></div>
+        <div class="data-cell"><div class="dk">高度 / ALTITUDE</div><div class="dv"><span id="dAlt">0</span><small>m</small></div></div>
+        <div class="data-cell"><div class="dk">发动机 N1</div><div class="dv"><span id="dRpm">0</span><small>%</small></div></div>
+        <div class="data-cell"><div class="dk">俯仰 / PITCH</div><div class="dv"><span id="dPitch">0.0</span><small>°</small></div></div>
+        <div class="data-cell"><div class="dk">横滚 / ROLL</div><div class="dv"><span id="dRoll">0.0</span><small>°</small></div></div>
+        <div class="data-cell"><div class="dk">偏航 / YAW</div><div class="dv"><span id="dYaw">0.0</span><small>°</small></div></div>
+        <div class="data-cell"><div class="dk">飞行阶段</div><div class="dv" style="font-size:12px;" id="dPhase">地面</div></div>
+        <div class="data-cell wide"><div class="dk">加力燃烧 / AFTERBURNER</div><div class="dv" style="font-size:12px;" id="dAb">关闭</div><div class="mini-bar"><i id="abBar"></i></div></div>
+      </div>
+      <div class="sim-flag">全部数据为飞行模拟输出，非真实飞机遥测数据。</div>
+      <div class="param-title">当前任务</div>
+      <div class="param-list">
+        <div class="param-row"><span class="k">演示时间轴</span><span class="v" id="dTime">00:00 / 00:40</span></div>
+        <div class="param-row"><span class="k">发动机状态</span><span class="v" id="dEngine">停车</span></div>
+        <div class="param-row"><span class="k">机头状态</span><span class="v" id="dNose">0.0°</span></div>
+        <div class="param-row"><span class="k">起落架状态</span><span class="v" id="dGear">放下</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= BOTTOM ================= -->
+  <footer class="bottom-dock">
+    <div class="dock-controls">
+      <div class="ctrl-group">
+        <div class="ctrl-head"><span class="ctrl-title">机头 NOSE</span><span class="ctrl-state" id="noseState">0.0°</span></div>
+        <div class="seg" id="droopSeg">
+          <button data-droop="0" class="active">正常 0°</button>
+          <button data-droop="5">5°</button>
+          <button data-droop="12.5">12.5°</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-head"><span class="ctrl-title">起落架 GEAR</span><span class="ctrl-state" id="gearState">DOWN</span></div>
+        <div class="btn-row">
+          <button class="btn sm active" id="btnGearDown">放下</button>
+          <button class="btn sm" id="btnGearUp">收起</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-head"><span class="ctrl-title">发动机 ENGINES</span><span class="ctrl-state live" id="engState">OFF</span></div>
+        <div class="btn-row">
+          <button class="btn sm" id="btnEngineStart">启动</button>
+          <button class="btn sm" id="btnEngineStop">停车</button>
+          <button class="btn sm" id="btnAB">加力</button>
+          <button class="btn sm active" id="btnBenchCut" title="切换发动机剖面 / 完整外罩">剖面</button>
+        </div>
+        <div class="rpm-wrap"><div class="rpm-track"><i id="rpmBar"></i></div><span class="rpm-val" id="rpmVal">0%</span></div>
+      </div>
+
+      <div class="ctrl-group" style="flex:1.2;">
+        <div class="ctrl-head"><span class="ctrl-title">飞行阶段 FLIGHT PHASE</span><span class="ctrl-state" id="phaseState">GROUND</span></div>
+        <div class="seg" id="phaseSeg">
+          <button data-phase="ground" class="active">地面</button>
+          <button data-phase="takeoff">起飞</button>
+          <button data-phase="climb">爬升</button>
+          <button data-phase="cruise">Mach 2 巡航</button>
+          <button data-phase="landing">着陆</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group att-wide">
+        <div class="ctrl-head"><span class="ctrl-title">姿态控制 ATTITUDE</span><span class="ctrl-state">MANUAL TRIM</span></div>
+        <div class="att-sliders">
+          <div class="att-item"><div class="lbl"><span>PITCH</span><output id="attPitchVal">0°</output></div><input type="range" id="attPitch" min="-18" max="18" step="0.5" value="0" /></div>
+          <div class="att-item"><div class="lbl"><span>ROLL</span><output id="attRollVal">0°</output></div><input type="range" id="attRoll" min="-35" max="35" step="0.5" value="0" /></div>
+          <div class="att-item"><div class="lbl"><span>YAW</span><output id="attYawVal">0°</output></div><input type="range" id="attYaw" min="-20" max="20" step="0.5" value="0" /></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-row">
+      <button class="play-btn" id="btnPlay" title="播放完整飞行演示" aria-label="播放">
+        <svg viewBox="0 0 10 10" fill="currentColor" id="playIcon"><path d="M1.5.8v8.4L9 5 1.5.8Z"/></svg>
+      </button>
+      <div class="tl-wrap">
+        <div class="tl-track" id="tlTrack">
+          <div class="tl-seg" data-phase="ground">地面 GROUND</div>
+          <div class="tl-seg" data-phase="takeoff">起飞 TAKEOFF</div>
+          <div class="tl-seg" data-phase="climb">爬升 CLIMB</div>
+          <div class="tl-seg" data-phase="cruise">Mach 2 巡航 CRUISE</div>
+          <div class="tl-seg" data-phase="landing">着陆 LANDING</div>
+          <div class="tl-fill" id="tlFill"></div>
+        </div>
+        <div class="tl-meta"><span>FLIGHT DEMONSTRATION TIMELINE</span><b id="tlTime">00:00 / 00:40</b></div>
+      </div>
+      <div class="phase-desc" id="phaseDesc">GROUND IDLE · GEAR DOWN</div>
+    </div>
+  </footer>
+</div>
+
+<div id="toast"></div><script>
+function __startApp(){
+  'use strict';
+  if (window.__CX_STARTED) return;
+  window.__CX_STARTED = true;
+
+  const T = THREE;
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const damp = (a, b, lambda, dt) => lerp(a, b, 1 - Math.exp(-lambda * dt));
+  const D2R = Math.PI / 180;
+
+  const canvas = $('scene');
+  const viewport = $('viewport');
+  let renderer, scene, camera, groundGrid, shadowFloor;
+  let aircraft, engineBench;
+  const groups = {};
+  const partsIndex = {};
+  const explodeItems = [];
+  const state = {
+    mode: 'overview',
+    engineBenchOn: false,
+    transparent: false,
+    cut: false,
+    internal: false,
+    explode: 0,
+    explodeTarget: 0,
+    noseAngle: 0,
+    noseTarget: 0,
+    gearDeploy: 1,
+    gearTarget: 1,
+    engineOn: false,
+    rpm: 0,
+    rpmTarget: 0,
+    ab: false,
+    benchCut: true,
+    selected: null,
+    selectedKey: null,
+    panelTab: 'info',
+    phase: 'ground',
+    phaseTime: 0,
+    demoPlaying: false,
+    simSpeed: 0,
+    simMach: 0,
+    simAlt: 0,
+    simPitch: 0,
+    simRoll: 0,
+    simYaw: 0,
+    manual: { pitch: 0, roll: 0, yaw: 0 },
+    presentation: false,
+    autoRotate: false,
+    tween: null,
+    lastInteraction: 0,
+    engineAngle: 0
+  };
+
+  const cameraState = {
+    theta: 0.78,
+    phi: 1.28,
+    radius: 68,
+    target: new T.Vector3(0, 0.45, 0)
+  };
+  const DEFAULT_CAM = { theta: 0.78, phi: 1.28, radius: 68, target: new T.Vector3(0, 0.45, 0) };
+  const activePointers = new Map();
+
+  const MAT = {};
+  const clipPlane = new T.Plane(new T.Vector3(-1, 0, 0), 0);
+
+  /* ============================================================
+     UTILITIES
+  ============================================================ */
+  function makePhysical(color, metalness, roughness, extra) {
+    return new T.MeshPhysicalMaterial(Object.assign({
+      color: color,
+      metalness: metalness,
+      roughness: roughness,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.35,
+      envMapIntensity: 1.0,
+      side: T.DoubleSide
+    }, extra || {}));
+  }
+
+  function createMaterials() {
+    MAT.skin = makePhysical(0x87939d, 0.28, 0.48, { clearcoat: 0.1, clearcoatRoughness: 0.45, envMapIntensity: 0.16 });
+    MAT.wingSkin = makePhysical(0x8e9aa4, 0.25, 0.5, { clearcoat: 0.08, envMapIntensity: 0.16, side: T.FrontSide });
+    MAT.tailSkin = makePhysical(0x87939d, 0.28, 0.48, { envMapIntensity: 0.16 });
+    MAT.nacelle = makePhysical(0x75828d, 0.36, 0.44, { envMapIntensity: 0.18 });
+    MAT.nacelleDark = makePhysical(0x56626d, 0.5, 0.44, { envMapIntensity: 0.2 });
+    MAT.wingUnder = new T.MeshStandardMaterial({ color: 0x71808c, metalness: 0.24, roughness: 0.6, side: T.BackSide, polygonOffset: true, polygonOffsetFactor: 1.5, polygonOffsetUnits: 1.5 });
+    MAT.control = new T.MeshStandardMaterial({ color: 0x8b98a3, metalness: 0.3, roughness: 0.5, side: T.DoubleSide });
+    MAT.edge = new T.MeshStandardMaterial({ color: 0x6c7984, metalness: 0.55, roughness: 0.38, side: T.DoubleSide });
+    MAT.stripe = new T.MeshStandardMaterial({ color: 0x0e6da8, metalness: 0.32, roughness: 0.42, side: T.DoubleSide });
+    MAT.glass = new T.MeshPhysicalMaterial({
+      color: 0x18242e, metalness: 0.5, roughness: 0.12, clearcoat: 1.0, clearcoatRoughness: 0.06,
+      transparent: true, opacity: 0.92, side: T.DoubleSide, envMapIntensity: 1.5
+    });
+    MAT.dark = new T.MeshStandardMaterial({ color: 0x303941, metalness: 0.4, roughness: 0.6, side: T.DoubleSide });
+    MAT.intakeDark = new T.MeshStandardMaterial({ color: 0x222b32, metalness: 0.55, roughness: 0.45, side: T.DoubleSide });
+    MAT.spar = new T.MeshStandardMaterial({ color: 0x2f7db5, metalness: 0.55, roughness: 0.4, side: T.DoubleSide });
+    MAT.rib = new T.MeshStandardMaterial({ color: 0xaebcc7, metalness: 0.55, roughness: 0.46, side: T.DoubleSide });
+    MAT.stringer = new T.MeshStandardMaterial({ color: 0x7e8f9c, metalness: 0.6, roughness: 0.42, side: T.DoubleSide });
+    MAT.floor = new T.MeshStandardMaterial({ color: 0x8fa0ac, metalness: 0.35, roughness: 0.65, side: T.DoubleSide });
+    MAT.steel = new T.MeshStandardMaterial({ color: 0x8d99a3, metalness: 0.85, roughness: 0.28, side: T.DoubleSide });
+    MAT.chrome = new T.MeshStandardMaterial({ color: 0xd5dade, metalness: 0.95, roughness: 0.16, side: T.DoubleSide });
+    MAT.tire = new T.MeshStandardMaterial({ color: 0x1d2328, metalness: 0.05, roughness: 0.88, side: T.DoubleSide });
+    MAT.hotMetal = new T.MeshStandardMaterial({ color: 0xa88d75, metalness: 0.8, roughness: 0.34, side: T.DoubleSide });
+    MAT.blade = new T.MeshStandardMaterial({ color: 0xb5bec6, metalness: 0.9, roughness: 0.24, side: T.DoubleSide });
+    MAT.combustor = new T.MeshStandardMaterial({ color: 0x8c745e, metalness: 0.75, roughness: 0.4, side: T.DoubleSide, emissive: 0x3a1503, emissiveIntensity: 0.22 });
+    function makeFlameTexture(core) {
+      const fc = document.createElement('canvas');
+      fc.width = 128; fc.height = 512;
+      const fx = fc.getContext('2d');
+      const g = fx.createLinearGradient(0, 512, 0, 0);
+      if (core) {
+        g.addColorStop(0, 'rgba(255,252,235,0.98)');
+        g.addColorStop(0.22, 'rgba(255,235,170,0.92)');
+        g.addColorStop(0.55, 'rgba(255,170,70,0.55)');
+        g.addColorStop(1, 'rgba(255,120,30,0)');
+      } else {
+        g.addColorStop(0, 'rgba(255,108,22,0.95)');
+        g.addColorStop(0.28, 'rgba(255,136,34,0.82)');
+        g.addColorStop(0.62, 'rgba(255,176,78,0.42)');
+        g.addColorStop(1, 'rgba(255,210,130,0)');
+      }
+      fx.clearRect(0, 0, 128, 512);
+      fx.fillStyle = g;
+      fx.beginPath();
+      fx.moveTo(64, 512);
+      fx.lineTo(128, 512);
+      fx.lineTo(128, 0);
+      fx.lineTo(0, 0);
+      fx.lineTo(0, 512);
+      fx.closePath();
+      fx.fill();
+      const tex = new T.CanvasTexture(fc);
+      tex.encoding = T.sRGBEncoding;
+      return tex;
+    }
+    MAT.flame = new T.MeshBasicMaterial({ map: makeFlameTexture(false), color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false, side: T.DoubleSide });
+    MAT.flameCore = new T.MeshBasicMaterial({ map: makeFlameTexture(true), color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false, side: T.DoubleSide });
+    MAT.air = new T.PointsMaterial({ color: 0x168bd2, size: 0.095, transparent: true, opacity: 0.0, depthWrite: false });
+    MAT.wire = new T.LineBasicMaterial({ color: 0x6e9cba, transparent: true, opacity: 0.55 });
+    MAT.wireSoft = new T.LineBasicMaterial({ color: 0xa7b7c3, transparent: true, opacity: 0.42 });
+    MAT.highlight = new T.MeshBasicMaterial({
+      color: 0x168bd2, transparent: true, opacity: 0.24, depthWrite: false, side: T.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    });
+    MAT.highlightLine = new T.LineBasicMaterial({ color: 0x087bbd, transparent: true, opacity: 0.95 });
+  }
+
+  function registerMesh(mesh, key) {
+    mesh.userData.part = key;
+    return mesh;
+  }
+
+  function addMesh(parent, geometry, material, key) {
+    const m = new T.Mesh(geometry, material);
+    if (key) m.userData.part = key;
+    parent.add(m);
+    return m;
+  }
+
+  function makeRoundedRectShape(w, h, r) {
+    const s = new T.Shape();
+    const x = -w / 2, y = -h / 2;
+    s.moveTo(x + r, y);
+    s.lineTo(x + w - r, y);
+    s.quadraticCurveTo(x + w, y, x + w, y + r);
+    s.lineTo(x + w, y + h - r);
+    s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    s.lineTo(x + r, y + h);
+    s.quadraticCurveTo(x, y + h, x, y + h - r);
+    s.lineTo(x, y + r);
+    s.quadraticCurveTo(x, y, x + r, y);
+    return s;
+  }
+
+  function makeLabelSprite(text, accent) {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, 512, 128);
+    ctx.fillStyle = 'rgba(255,255,255,0.93)';
+    const r = 18;
+    ctx.beginPath();
+    ctx.moveTo(r, 22); ctx.lineTo(512 - r, 22); ctx.quadraticCurveTo(512 - 8, 22, 512 - 8, 34);
+    ctx.lineTo(512 - 8, 94); ctx.quadraticCurveTo(512 - 8, 106, 512 - r, 106);
+    ctx.lineTo(r, 106); ctx.quadraticCurveTo(8, 106, 8, 94); ctx.lineTo(8, 34); ctx.quadraticCurveTo(8, 22, r, 22);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = accent || '#168BD2'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = accent || '#168BD2';
+    ctx.fillRect(8, 34, 6, 60);
+    ctx.fillStyle = '#24303A';
+    ctx.font = '600 38px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 34, 66);
+    const tex = new T.CanvasTexture(c);
+    tex.encoding = T.sRGBEncoding;
+    const mat = new T.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
+    const sp = new T.Sprite(mat);
+    sp.scale.set(4.4, 1.1, 1);
+    sp.renderOrder = 20;
+    return sp;
+  }
+
+  let toastTimer = 0;
+  function toast(html, ms) {
+    const t = $('toast');
+    t.innerHTML = html;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), ms || 2100);
+  }
+
+  /* ============================================================
+     SCENE
+  ============================================================ */
+  function initThree() {
+    createMaterials();
+    renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(viewport.clientWidth, viewport.clientHeight, false);
+    renderer.outputEncoding = T.sRGBEncoding;
+    renderer.toneMapping = T.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = T.PCFSoftShadowMap;
+    renderer.localClippingEnabled = true;
+    renderer.setClearColor(0xffffff, 1);
+
+    scene = new T.Scene();
+    scene.background = new T.Color(0xffffff);
+
+    camera = new T.PerspectiveCamera(34, viewport.clientWidth / Math.max(1, viewport.clientHeight), 0.1, 800);
+    updateCamera();
+
+    // Procedural studio environment for believable metal reflections.
+    const envCanvas = document.createElement('canvas');
+    envCanvas.width = 1024; envCanvas.height = 512;
+    const ec = envCanvas.getContext('2d');
+    const grad = ec.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.42, '#e8eef3');
+    grad.addColorStop(0.62, '#c9d3dc');
+    grad.addColorStop(1, '#8e9aa4');
+    ec.fillStyle = grad; ec.fillRect(0, 0, 1024, 512);
+    const glow = ec.createRadialGradient(300, 120, 10, 300, 120, 250);
+    glow.addColorStop(0, 'rgba(255,255,255,1)');
+    glow.addColorStop(0.4, 'rgba(255,255,255,.55)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    ec.fillStyle = glow; ec.beginPath(); ec.arc(300, 120, 250, 0, Math.PI * 2); ec.fill();
+    ec.fillStyle = 'rgba(255,255,255,.8)';
+    ec.fillRect(0, 250, 1024, 5);
+    const envTex = new T.CanvasTexture(envCanvas);
+    envTex.mapping = T.EquirectangularReflectionMapping;
+    envTex.encoding = T.sRGBEncoding;
+    // A physical environment map is intentionally not applied: direct studio lighting
+    // preserves the silver-white/aircraft-lab palette against the white backdrop.
+
+    const hemi = new T.HemisphereLight(0xffffff, 0xacb8c2, 0.27);
+    scene.add(hemi);
+    const key = new T.DirectionalLight(0xffffff, 0.72);
+    key.position.set(48, 70, 44);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.camera.left = -48; key.shadow.camera.right = 48;
+    key.shadow.camera.top = 48; key.shadow.camera.bottom = -48;
+    key.shadow.camera.near = 1; key.shadow.camera.far = 200;
+    key.shadow.bias = -0.0006;
+    key.shadow.radius = 4;
+    scene.add(key);
+    const fill = new T.DirectionalLight(0xdcecf8, 0.18);
+    fill.position.set(-55, 26, 18);
+    scene.add(fill);
+    const rim = new T.DirectionalLight(0xe8f3fa, 0.36);
+    rim.position.set(-8, 30, -70);
+    scene.add(rim);
+
+    shadowFloor = new T.Mesh(new T.PlaneGeometry(320, 320), new T.ShadowMaterial({ color: 0x2a3640, opacity: 0.27 }));
+    shadowFloor.rotation.x = -Math.PI / 2;
+    shadowFloor.position.y = -3.52;
+    shadowFloor.receiveShadow = true;
+    scene.add(shadowFloor);
+
+    groundGrid = new T.GridHelper(200, 50, 0xcbd5dd, 0xe8edf1);
+    groundGrid.position.y = -3.51;
+    groundGrid.material.transparent = true;
+    groundGrid.material.opacity = 0.5;
+    groundGrid.material.depthWrite = false;
+    scene.add(groundGrid);
+
+    // faint datum axes at origin for engineering feel
+    const axes = new T.Group();
+    const axisMat = new T.LineBasicMaterial({ color: 0xb9c7d2, transparent: true, opacity: 0.55 });
+    const axisGeo = new T.BufferGeometry().setFromPoints([
+      new T.Vector3(-18, 0, 0), new T.Vector3(18, 0, 0),
+      new T.Vector3(0, 0, -36), new T.Vector3(0, 0, 36)
+    ]);
+    axes.add(new T.LineSegments(axisGeo, axisMat));
+    axes.position.y = -3.48;
+    scene.add(axes);
+
+    aircraft = new T.Group();
+    aircraft.name = 'CONCORDE_X';
+    scene.add(aircraft);
+    groups.aircraft = aircraft;
+
+    buildAircraft();
+    explodeItems.push({ obj: groups.nose, base: groups.nose.position.clone(), offset: new T.Vector3(0, 0, 5.5) });
+
+    engineBench = new T.Group();
+    engineBench.name = 'OLYMPUS_593_BENCH';
+    engineBench.visible = false;
+    scene.add(engineBench);
+    groups.bench = engineBench;
+    buildEngineBench();
+
+    indexParts();
+
+    aircraft.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    engineBench.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+
+    setupUI();
+    setupSelection();
+    window.__CX = { state: state, groups: groups, scene: scene, camera: camera, cameraState: cameraState, renderer: renderer, aircraft: aircraft, engineBench: engineBench, materials: MAT, updateCamera: updateCamera, setView: setView };
+
+    window.addEventListener('resize', onResize);
+    if (window.ResizeObserver) new ResizeObserver(onResize).observe(viewport);
+
+    requestAnimationFrame(() => {
+      $('loader').classList.add('hidden');
+      setTimeout(() => { $('loader').style.display = 'none'; }, 500);
+    });
+  }
+
+  function onResize() {
+    const w = viewport.clientWidth, h = viewport.clientHeight;
+    if (!w || !h) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+  }
+
+  function updateCamera() {
+    const s = cameraState;
+    camera.position.set(
+      s.target.x + s.radius * Math.sin(s.phi) * Math.sin(s.theta),
+      s.target.y + s.radius * Math.cos(s.phi),
+      s.target.z + s.radius * Math.sin(s.phi) * Math.cos(s.theta)
+    );
+    camera.lookAt(s.target);
+  }
+
+  function flyTo(theta, phi, radius, target, dur) {
+    state.tween = {
+      t: 0,
+      dur: dur || 0.95,
+      from: { theta: cameraState.theta, phi: cameraState.phi, radius: cameraState.radius, target: cameraState.target.clone() },
+      to: { theta: theta, phi: phi, radius: radius, target: target ? target.clone() : cameraState.target.clone() }
+    };
+  }
+
+  function setView(name) {
+    const tg = new T.Vector3(0, 0.45, 0);
+    switch (name) {
+      case 'front': flyTo(0, Math.PI / 2, 54, tg); break;
+      case 'back': flyTo(Math.PI, Math.PI / 2, 54, tg); break;
+      case 'left': flyTo(-Math.PI / 2, Math.PI / 2, 76, tg); break;
+      case 'right': flyTo(Math.PI / 2, Math.PI / 2, 76, tg); break;
+      case 'top': flyTo(0.0001, 0.045, 106, tg); break;
+      case 'bottom': flyTo(0.0001, Math.PI - 0.045, 106, tg); break;
+      case 'iso': flyTo(0.78, 1.2, 78, tg); break;
+      case 'fit': flyTo(0.78, 1.28, 68, tg); break;
+      default: resetView();
+    }
+  }
+
+  function resetView() {
+    state.tween = {
+      t: 0, dur: 1.0,
+      from: { theta: cameraState.theta, phi: cameraState.phi, radius: cameraState.radius, target: cameraState.target.clone() },
+      to: { theta: DEFAULT_CAM.theta, phi: DEFAULT_CAM.phi, radius: DEFAULT_CAM.radius, target: DEFAULT_CAM.target.clone() }
+    };
+  }
+
+  /* ============================================================
+     FUSELAGE
+  ============================================================ */
+  const FUSE_NOSE_END = 30.83;
+  const FUSE_HINGE = 21.0;
+  const FUSE_TAIL = -30.83;
+
+  function fuselageRadius(z) {
+    const rMax = 1.44;
+    if (z >= 15) {
+      const t = clamp((FUSE_HINGE - z) / 6, 0, 1);
+      return 0.74 + (rMax - 0.74) * smoothstep(0, 1, t);
+    }
+    if (z >= -17.5) return rMax + 0.012 * Math.sin((z + 17.5) * 0.18);
+    const t = clamp((-17.5 - z) / 13.33, 0, 1);
+    return 0.018 + (rMax - 0.018) * Math.pow(1 - t, 0.86);
+  }
+
+  function buildBodyGeometry(z0, z1, segZ, radial, radiusFn, centerYFn, capStart, capEnd) {
+    const positions = [], indices = [];
+    for (let i = 0; i <= segZ; i++) {
+      const t = i / segZ;
+      const z = lerp(z0, z1, t);
+      const r = radiusFn(z);
+      const ry = r * 1.045;
+      const cy = centerYFn ? centerYFn(z) : 0;
+      for (let j = 0; j < radial; j++) {
+        const a = (j / radial) * Math.PI * 2;
+        positions.push(Math.cos(a) * r, cy + Math.sin(a) * ry, z);
+      }
+    }
+    for (let i = 0; i < segZ; i++) {
+      for (let j = 0; j < radial; j++) {
+        const jn = (j + 1) % radial;
+        const a = i * radial + j;
+        const b = (i + 1) * radial + j;
+        const c = (i + 1) * radial + jn;
+        const d = i * radial + jn;
+        indices.push(a, b, d, b, c, d);
+      }
+    }
+    function addCap(i, flip) {
+      const z = i === 0 ? z0 : z1;
+      const r = radiusFn(z);
+      const cy = centerYFn ? centerYFn(z) : 0;
+      const center = positions.length / 3;
+      positions.push(0, cy, z);
+      for (let j = 0; j < radial; j++) {
+        const jn = (j + 1) % radial;
+        const a = i * radial + j;
+        const b = i * radial + jn;
+        if (flip) indices.push(center, b, a); else indices.push(center, a, b);
+      }
+    }
+    if (capStart) addCap(0, z0 < z1);
+    if (capEnd) addCap(segZ, z0 < z1);
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  function buildBandGeometry(z0, z1, segZ, segA, aStart, aLen, radiusFn, centerYFn, offset) {
+    const positions = [], indices = [];
+    for (let i = 0; i <= segZ; i++) {
+      const t = i / segZ;
+      const z = lerp(z0, z1, t);
+      const r = radiusFn(z) + (offset || 0.012);
+      const ry = r * 1.045;
+      const cy = centerYFn ? centerYFn(z) : 0;
+      for (let j = 0; j <= segA; j++) {
+        const a = aStart + (j / segA) * aLen;
+        positions.push(Math.cos(a) * r, cy + Math.sin(a) * ry, z);
+      }
+    }
+    const stride = segA + 1;
+    for (let i = 0; i < segZ; i++) {
+      for (let j = 0; j < segA; j++) {
+        const a = i * stride + j;
+        const b = (i + 1) * stride + j;
+        const c = (i + 1) * stride + j + 1;
+        const d = i * stride + j + 1;
+        indices.push(a, b, d, b, c, d);
+      }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  const noseCenterY = (z) => {
+    const t = clamp((z - FUSE_HINGE) / (FUSE_NOSE_END - FUSE_HINGE), 0, 1);
+    return 0.06 - 0.72 * t * t;
+  };
+  const noseRadius = (z) => {
+    const t = clamp((z - FUSE_HINGE) / (FUSE_NOSE_END - FUSE_HINGE), 0, 1);
+    return 0.008 + 0.732 * Math.pow(1 - t, 0.6);
+  };
+
+  function buildFuselage() {
+    const g = new T.Group();
+    g.name = 'fuselage';
+    groups.fuselage = g;
+    aircraft.add(g);
+
+    const mainGeo = buildBodyGeometry(FUSE_HINGE, FUSE_TAIL, 52, 40, fuselageRadius, null, false, true);
+    const main = addMesh(g, mainGeo, MAT.skin, 'fuselage');
+    main.name = 'fuselage_skin';
+
+    // subtle longitudinal panel seams
+    const seamMat = new T.LineBasicMaterial({ color: 0xbfc8d0, transparent: true, opacity: 0.38 });
+    for (let z = 16; z >= -25; z -= 5.4) {
+      const r = fuselageRadius(z);
+      const pts = [];
+      for (let k = 0; k <= 48; k++) {
+        const a = (k / 48) * Math.PI * 2;
+        pts.push(new T.Vector3(Math.cos(a) * (r + 0.006), Math.sin(a) * r * 1.045 + 0.0, z));
+      }
+      const line = new T.Line(new T.BufferGeometry().setFromPoints(pts), seamMat);
+      line.userData.part = 'fuselage';
+      g.add(line);
+    }
+
+    // blue cheatline
+    const stripeGeo = new T.PlaneGeometry(27, 0.17);
+    const stripeR = addMesh(g, stripeGeo, MAT.stripe, 'fuselage');
+    stripeR.position.set(1.437, -0.18, 0.4);
+    stripeR.rotation.y = Math.PI / 2;
+    const stripeL = stripeR.clone();
+    stripeL.position.x = -1.437;
+    stripeL.rotation.y = -Math.PI / 2;
+    stripeL.scale.x = -1;
+    stripeL.userData.part = 'fuselage';
+    g.add(stripeL);
+
+    // cabin windows
+    const winGeo = new T.PlaneGeometry(0.58, 0.27);
+    const winMat = new T.MeshStandardMaterial({ color: 0x2a3944, metalness: 0.45, roughness: 0.16, side: T.DoubleSide });
+    for (let z = 15.4; z >= -13.4; z -= 1.32) {
+      const r = fuselageRadius(z);
+      for (const side of [1, -1]) {
+        const angle = 0.18;
+        const wm = new T.Mesh(winGeo, winMat);
+        wm.position.set(side * (r * Math.cos(angle) + 0.012), r * 1.045 * Math.sin(angle), z);
+        wm.rotation.y = side * Math.PI / 2;
+        wm.userData.part = 'fuselage';
+        g.add(wm);
+      }
+    }
+
+    // livery titles
+    const lc = document.createElement('canvas');
+    lc.width = 1024; lc.height = 256;
+    const lx = lc.getContext('2d');
+    lx.clearRect(0, 0, 1024, 256);
+    lx.fillStyle = '#0E5D8F';
+    lx.font = '800 128px "Segoe UI", Arial, sans-serif';
+    lx.fillText('CONCORDE', 40, 155);
+    lx.fillStyle = '#168BD2';
+    lx.font = '800 128px "Segoe UI", Arial, sans-serif';
+    lx.fillText('X', 790, 155);
+    lx.fillStyle = '#66717D';
+    lx.font = '500 34px "Segoe UI", Arial, sans-serif';
+    lx.fillText('SUPERSONIC  ·  G-BOAC', 48, 213);
+    const lTex = new T.CanvasTexture(lc);
+    lTex.encoding = T.sRGBEncoding;
+    const lMat = new T.MeshBasicMaterial({ map: lTex, transparent: true, side: T.DoubleSide, depthWrite: false });
+    const decalGeo = new T.PlaneGeometry(5.8, 1.02);
+    const decalR = new T.Mesh(decalGeo, lMat);
+    decalR.position.set(1.452, 0.78, 4.4);
+    decalR.rotation.y = Math.PI / 2;
+    decalR.userData.part = 'fuselage';
+    g.add(decalR);
+    const decalL = new T.Mesh(decalGeo, lMat);
+    decalL.position.set(-1.452, 0.78, 4.4);
+    decalL.rotation.y = -Math.PI / 2;
+    decalL.scale.x = -1;
+    decalL.userData.part = 'fuselage';
+    g.add(decalL);
+
+    // cabin floor / internal frames
+    const inner = new T.Group();
+    inner.name = 'fuselage_internal';
+    inner.visible = false;
+    groups.fuselageInternal = inner;
+    g.add(inner);
+
+    const floor = new T.Mesh(new T.BoxGeometry(2.2, 0.09, 32), MAT.floor);
+    floor.position.set(0, -0.72, 0.3);
+    floor.userData.part = 'fuselage_structure';
+    inner.add(floor);
+
+    for (let z = 17.4; z >= -21; z -= 2.35) {
+      const r = fuselageRadius(z);
+      const pts = [];
+      for (let k = 0; k <= 40; k++) {
+        const a = (k / 40) * Math.PI * 2;
+        pts.push(new T.Vector3(Math.cos(a) * r * 0.94, Math.sin(a) * r * 1.045 * 0.94, z));
+      }
+      const frame = new T.Line(new T.BufferGeometry().setFromPoints(pts), MAT.wire);
+      frame.userData.part = 'fuselage_structure';
+      inner.add(frame);
+    }
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2 + 0.18;
+      const pts = [];
+      for (let z = 17; z >= -21; z -= 1.2) {
+        const r = fuselageRadius(z) * 0.94;
+        pts.push(new T.Vector3(Math.cos(a) * r, Math.sin(a) * r * 1.045, z));
+      }
+      const st = new T.Line(new T.BufferGeometry().setFromPoints(pts), MAT.wireSoft);
+      st.userData.part = 'fuselage_structure';
+      inner.add(st);
+    }
+    // visible cabin seats, schematic
+    const seatMat = new T.MeshStandardMaterial({ color: 0x3d6b89, metalness: 0.2, roughness: 0.7 });
+    for (let z = 13; z >= -12.5; z -= 1.75) {
+      for (const side of [-1, 1]) {
+        const seat = new T.Mesh(new T.BoxGeometry(0.38, 0.48, 0.45), seatMat);
+        seat.position.set(side * 0.62, -0.38, z);
+        seat.userData.part = 'fuselage_structure';
+        inner.add(seat);
+      }
+    }
+
+    // nose assembly (hinged)
+    const nose = new T.Group();
+    nose.name = 'droop_nose';
+    nose.position.set(0, 0.06, FUSE_HINGE);
+    g.add(nose);
+    groups.nose = nose;
+
+    const noseGeo = buildBodyGeometry(FUSE_HINGE, FUSE_NOSE_END, 36, 40, noseRadius, noseCenterY, false, true);
+    noseGeo.translate(0, -0.06, -FUSE_HINGE);
+    const noseMesh = addMesh(nose, noseGeo, MAT.skin, 'nose');
+    noseMesh.name = 'droop_nose_skin';
+
+    // windshield band
+    const wsGeo = buildBandGeometry(FUSE_HINGE + 2.9, FUSE_HINGE + 4.95, 8, 22, Math.PI * 0.30, Math.PI * 0.40, noseRadius, noseCenterY, 0.017);
+    wsGeo.translate(0, -0.06, -FUSE_HINGE);
+    addMesh(nose, wsGeo, MAT.glass, 'nose');
+
+    // windshield frame strips
+    for (const ang of [Math.PI * 0.36, Math.PI * 0.44, Math.PI * 0.5, Math.PI * 0.56, Math.PI * 0.64]) {
+      const pts = [];
+      for (let z = FUSE_HINGE + 2.86; z <= FUSE_HINGE + 4.98; z += 0.18) {
+        const r = noseRadius(z) + 0.023;
+        pts.push(new T.Vector3(Math.cos(ang) * r, noseCenterY(z) + Math.sin(ang) * r * 1.045 - 0.06, z - FUSE_HINGE));
+      }
+      const fm = new T.Line(new T.BufferGeometry().setFromPoints(pts), MAT.dark);
+      fm.userData.part = 'nose';
+      nose.add(fm);
+    }
+
+    // cockpit side panes
+    for (const side of [1, -1]) {
+      for (let k = 0; k < 2; k++) {
+        const zz = 24.45 + k * 1.05;
+        const rr = noseRadius(zz);
+        const pane = new T.Mesh(new T.PlaneGeometry(0.42, 0.26), MAT.glass);
+        pane.position.set(side * (rr * 0.77 + 0.012), 0.3, zz - FUSE_HINGE);
+        pane.rotation.y = side * Math.PI / 2;
+        pane.rotation.z = side * -0.12;
+        pane.userData.part = 'nose';
+        nose.add(pane);
+      }
+    }
+
+    // nose pitot probe
+    const probe = new T.Mesh(new T.CylinderGeometry(0.012, 0.038, 1.25, 8), MAT.chrome);
+    probe.rotation.x = Math.PI / 2;
+    probe.position.set(0, noseCenterY(FUSE_NOSE_END) - 0.06, FUSE_NOSE_END - FUSE_HINGE - 0.2);
+    probe.userData.part = 'nose';
+    nose.add(probe);
+  }
+
+  /* ============================================================
+     OGIVAL DELTA WING
+  ============================================================ */
+  const WING_ROOT_X = 1.12;
+  const WING_TIP_X = 12.8;
+
+  function wingSpanX(s) { return WING_ROOT_X + s * (WING_TIP_X - WING_ROOT_X); }
+  function wingLEz(s) { return 9.2 - (20.0 * s + 7.9 * s * s * s); }
+  function wingTEz(s) { return -21.5 + 1.5 * s * s; }
+  function wingChord(s) { return wingLEz(s) - wingTEz(s); }
+  function wingThicknessRatio(s) { return 0.0315 + 0.0135 * s; }
+  function airfoilHalf(c) {
+    return 5 * (0.2969 * Math.sqrt(Math.max(c, 0)) - 0.126 * c - 0.3516 * c * c + 0.2843 * c * c * c - 0.1036 * c * c * c * c);
+  }
+
+  function buildWingSurfaceGeometry() {
+    const NS = 58, NC = 20;
+    const positions = [], indices = [];
+    const K = 2 * (NC + 1);
+    for (let i = 0; i <= NS; i++) {
+      const s = i / NS;
+      const x = wingSpanX(s);
+      const zLE = wingLEz(s);
+      const chord = wingChord(s);
+      const tr = wingThicknessRatio(s);
+      const yBase = -0.12 - 0.035 * s;
+      for (let j = 0; j <= NC; j++) {
+        const c = j / NC;
+        const y = yBase + airfoilHalf(c) * tr * chord;
+        positions.push(x, y, zLE - c * chord);
+      }
+      for (let j = NC; j >= 0; j--) {
+        const c = j / NC;
+        const y = yBase - airfoilHalf(c) * tr * chord;
+        positions.push(x, y, zLE - c * chord);
+      }
+    }
+    for (let i = 0; i < NS; i++) {
+      for (let j = 0; j < K; j++) {
+        const jn = (j + 1) % K;
+        const a = i * K + j;
+        const b = (i + 1) * K + j;
+        const c = (i + 1) * K + jn;
+        const d = i * K + jn;
+        indices.push(a, b, d, b, c, d);
+      }
+    }
+    // tip cap
+    const tipCenter = positions.length / 3;
+    positions.push(wingSpanX(1), -0.155, (wingLEz(1) + wingTEz(1)) / 2);
+    const base = NS * K;
+    for (let j = 0; j < K; j++) {
+      const jn = (j + 1) % K;
+      indices.push(tipCenter, base + j, base + jn);
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  function makeSparGeometry(chordFrac, height, width, s0, s1) {
+    const steps = 26;
+    const positions = [], indices = [];
+    for (let i = 0; i <= steps; i++) {
+      const s = lerp(s0, s1, i / steps);
+      const x = wingSpanX(s);
+      const z = wingLEz(s) - wingChord(s) * chordFrac;
+      const y = -0.12 - 0.035 * s;
+      const halfH = height * 0.5 * (1 - 0.4 * s);
+      const halfW = width * 0.5;
+      positions.push(x, y - halfH, z - halfW, x, y + halfH, z - halfW, x, y + halfH, z + halfW, x, y - halfH, z + halfW);
+    }
+    for (let i = 0; i < steps; i++) {
+      const a = i * 4, b = (i + 1) * 4;
+      for (let k = 0; k < 4; k++) {
+        const kn = (k + 1) % 4;
+        indices.push(a + k, b + k, a + kn, b + k, b + kn, a + kn);
+      }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  function makeStringerGeometry(chordFrac, s0, s1) {
+    const steps = 30;
+    const positions = [], indices = [];
+    const half = 0.035;
+    for (let i = 0; i <= steps; i++) {
+      const s = lerp(s0, s1, i / steps);
+      const x = wingSpanX(s);
+      const z = wingLEz(s) - wingChord(s) * chordFrac;
+      const y = -0.12 - 0.035 * s + 0.16;
+      positions.push(x, y - half, z, x, y + half, z, x, y, z + half);
+    }
+    for (let i = 0; i < steps; i++) {
+      const a = i * 3, b = (i + 1) * 3;
+      indices.push(a, b, a + 1, b, b + 1, a + 1);
+      indices.push(a + 1, b + 1, a + 2, b + 1, b + 2, a + 2);
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  function buildRibGeometry(s) {
+    const chord = wingChord(s) * 0.94;
+    const zLE = wingLEz(s) + 0.02 * chord;
+    const tr = wingThicknessRatio(s);
+    const yBase = -0.12 - 0.035 * s;
+    const pts = [];
+    const N = 24;
+    for (let j = 0; j <= N; j++) {
+      const c = j / N;
+      pts.push([-c * chord, yBase + airfoilHalf(c) * tr * wingChord(s) * 0.91]);
+    }
+    for (let j = N; j >= 0; j--) {
+      const c = j / N;
+      pts.push([-c * chord, yBase - airfoilHalf(c) * tr * wingChord(s) * 0.91]);
+    }
+    const shape = new T.Shape();
+    shape.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], pts[i][1]);
+    const geo = new T.ExtrudeGeometry(shape, { depth: 0.055, bevelEnabled: false, curveSegments: 1 });
+    geo.rotateY(-Math.PI / 2);
+    geo.translate(wingSpanX(s) + 0.0275, 0, zLE);
+    return geo;
+  }
+
+  function buildWingSide() {
+    const side = new T.Group();
+    side.name = 'wing_right';
+
+    const skin = new T.Group();
+    skin.name = 'wing_skin';
+    const wingGeo = buildWingSurfaceGeometry();
+    const wingMesh = addMesh(skin, wingGeo, MAT.wingSkin, 'wing');
+    wingMesh.name = 'ogival_delta_skin';
+    const underMesh = new T.Mesh(wingGeo, MAT.wingUnder);
+    underMesh.name = 'ogival_delta_underside';
+    underMesh.userData.part = 'wing';
+    skin.add(underMesh);
+
+    // thin leading-edge highlight strip gives definition against white
+    const lePts = [];
+    for (let i = 0; i <= 30; i++) {
+      const s = i / 30;
+      lePts.push(new T.Vector3(wingSpanX(s), -0.12 - 0.035 * s + 0.004, wingLEz(s)));
+    }
+    const leCurve = new T.CatmullRomCurve3(lePts);
+    const leLine = new T.Mesh(new T.TubeGeometry(leCurve, 40, 0.026, 4, false), MAT.edge);
+    leLine.userData.part = 'wing';
+    skin.add(leLine);
+
+    // schematic panel lines across the wing surface give the planform scale
+    const panelMat = new T.LineBasicMaterial({ color: 0x8a98a3, transparent: true, opacity: 0.24 });
+    [0.16, 0.32, 0.5, 0.68, 0.85].forEach((cf) => {
+      const pts = [];
+      for (let i = 0; i <= 34; i++) {
+        const ss = i / 34;
+        const chord = wingChord(ss);
+        const tr = wingThicknessRatio(ss);
+        const y = -0.12 - 0.035 * ss + airfoilHalf(cf) * tr * chord + 0.012;
+        pts.push(new T.Vector3(wingSpanX(ss), y, wingLEz(ss) - cf * chord));
+      }
+      const pl = new T.Line(new T.BufferGeometry().setFromPoints(pts), panelMat);
+      pl.userData.part = 'wing';
+      skin.add(pl);
+    });
+    [0.22, 0.42, 0.62, 0.82].forEach((ss) => {
+      const pts = [];
+      const chord = wingChord(ss);
+      const tr = wingThicknessRatio(ss);
+      for (let i = 0; i <= 16; i++) {
+        const cf = i / 16;
+        const y = -0.12 - 0.035 * ss + airfoilHalf(cf) * tr * chord + 0.012;
+        pts.push(new T.Vector3(wingSpanX(ss), y, wingLEz(ss) - cf * chord));
+      }
+      const pl = new T.Line(new T.BufferGeometry().setFromPoints(pts), panelMat);
+      pl.userData.part = 'wing';
+      skin.add(pl);
+    });
+    side.add(skin);
+
+    const struct = new T.Group();
+    struct.name = 'wing_structure';
+    struct.visible = false;
+    const sparMain = addMesh(struct, makeSparGeometry(0.255, 0.36, 0.16, 0.03, 0.985), MAT.spar, 'spar_main');
+    sparMain.name = 'main_spar';
+    const sparRear = addMesh(struct, makeSparGeometry(0.70, 0.25, 0.12, 0.05, 0.975), MAT.spar, 'spar_rear');
+    sparRear.name = 'rear_spar';
+
+    const ribFs = [0.05, 0.13, 0.21, 0.29, 0.37, 0.45, 0.53, 0.61, 0.69, 0.77, 0.85, 0.92];
+    ribFs.forEach((s) => {
+      const rib = new T.Mesh(buildRibGeometry(s), MAT.rib);
+      rib.userData.part = 'ribs';
+      struct.add(rib);
+    });
+    [0.36, 0.44, 0.55, 0.62, 0.78, 0.86].forEach((cf) => {
+      const sg = addMesh(struct, makeStringerGeometry(cf, 0.08, 0.95), MAT.stringer, 'stringers');
+      sg.name = 'stringer';
+    });
+    side.add(struct);
+
+    // trailing-edge elevons: ribbon surfaces flush with the curved trailing edge
+    const elevonGroup = new T.Group();
+    elevonGroup.name = 'elevons';
+    function makeElevonRibbon(a, b) {
+      const steps = 22;
+      const positions = [], indices = [];
+      for (let i = 0; i <= steps; i++) {
+        const ss = lerp(a, b, i / steps);
+        const x = wingSpanX(ss);
+        const zT = wingTEz(ss) - 0.02;
+        const zH = zT + 0.72;
+        const yTop = -0.096 - 0.035 * ss;
+        const yBot = yTop - 0.034;
+        positions.push(x, yTop, zH, x, yTop, zT, x, yBot, zT, x, yBot, zH);
+      }
+      for (let i = 0; i < steps; i++) {
+        const a0 = i * 4, b0 = (i + 1) * 4;
+        for (let k = 0; k < 4; k++) {
+          const kn = (k + 1) % 4;
+          indices.push(a0 + k, b0 + k, a0 + kn, b0 + k, b0 + kn, a0 + kn);
+        }
+      }
+      const g = new T.BufferGeometry();
+      g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+      g.setIndex(indices);
+      g.computeVertexNormals();
+      const m = new T.Mesh(g, MAT.control);
+      m.userData.part = 'elevon';
+      return m;
+    }
+    [[0.28, 0.475], [0.485, 0.705], [0.715, 0.955]].forEach(([a, b]) => {
+      elevonGroup.add(makeElevonRibbon(a, b));
+    });
+    side.add(elevonGroup);
+
+    return { side, skin, struct };
+  }
+
+  function buildWing() {
+    const root = new T.Group();
+    root.name = 'wing_root';
+    groups.wing = root;
+    aircraft.add(root);
+
+    const right = buildWingSide();
+    root.add(right.side);
+    const left = right.side.clone(true);
+    left.scale.x = -1;
+    left.name = 'wing_left';
+    root.add(left);
+
+    groups.wingLeft = left;
+    groups.wingRight = right.side;
+    groups.wingSkinRight = right.skin;
+    groups.wingStructRight = right.struct;
+    groups.wingSkinLeft = left.getObjectByName('wing_skin');
+    groups.wingStructLeft = left.getObjectByName('wing_structure');
+
+    explodeItems.push(
+      { obj: right.side, base: right.side.position.clone(), offset: new T.Vector3(5.4, 1.0, 0.5) },
+      { obj: left, base: left.position.clone(), offset: new T.Vector3(-5.4, 1.0, 0.5) }
+    );
+  }
+
+  // placeholders implemented in the next code block
+  function buildAircraft() {
+    buildFuselage();
+    buildWing();
+    buildTail();
+    buildNacelles();
+    buildLandingGear();
+  }/* ============================================================
+     VERTICAL TAIL
+  ============================================================ */
+  function buildTail() {
+    const g = new T.Group();
+    g.name = 'tail';
+    groups.tail = g;
+    aircraft.add(g);
+
+    const finShape = new T.Shape();
+    finShape.moveTo(-20.2, 1.15);
+    finShape.bezierCurveTo(-23.0, 3.5, -25.8, 5.9, -27.3, 7.42);
+    finShape.lineTo(-28.5, 7.42);
+    finShape.lineTo(-30.35, 1.15);
+    finShape.closePath();
+    const finGeo = new T.ExtrudeGeometry(finShape, {
+      depth: 0.32, bevelEnabled: true, bevelThickness: 0.055, bevelSize: 0.055, bevelSegments: 2, curveSegments: 16
+    });
+    finGeo.rotateY(-Math.PI / 2);
+    finGeo.translate(0.16, 0, 0);
+    const fin = new T.Mesh(finGeo, MAT.tailSkin);
+    fin.userData.part = 'fin';
+    fin.name = 'vertical_fin';
+    g.add(fin);
+
+    // rudder panel
+    const rudShape = new T.Shape();
+    rudShape.moveTo(-28.55, 1.7);
+    rudShape.lineTo(-29.45, 1.7);
+    rudShape.lineTo(-28.72, 7.36);
+    rudShape.lineTo(-28.5, 7.36);
+    rudShape.closePath();
+    const rudGeo = new T.ExtrudeGeometry(rudShape, { depth: 0.22, bevelEnabled: false });
+    rudGeo.rotateY(-Math.PI / 2);
+    rudGeo.translate(0.11, 0, 0);
+    const rud = new T.Mesh(rudGeo, MAT.nacelleDark);
+    rud.userData.part = 'rudder';
+    rud.name = 'rudder';
+    g.add(rud);
+
+    // dorsal spine fairing
+    const dorShape = new T.Shape();
+    dorShape.moveTo(-17.8, 1.18);
+    dorShape.quadraticCurveTo(-21.4, 1.5, -23.6, 1.5);
+    dorShape.lineTo(-23.4, 1.02);
+    dorShape.lineTo(-17.8, 1.02);
+    dorShape.closePath();
+    const dorGeo = new T.ExtrudeGeometry(dorShape, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.08, bevelSegments: 2 });
+    dorGeo.rotateY(-Math.PI / 2);
+    dorGeo.translate(0.25, 0, 0);
+    const dor = new T.Mesh(dorGeo, MAT.tailSkin);
+    dor.userData.part = 'fin';
+    g.add(dor);
+
+    const navGeo = new T.SphereGeometry(0.075, 10, 8);
+    const navMat = new T.MeshBasicMaterial({ color: 0xd84545 });
+    const nav = new T.Mesh(navGeo, navMat);
+    nav.position.set(0, 7.44, -28.1);
+    nav.userData.part = 'fin';
+    g.add(nav);
+
+    const fc = document.createElement('canvas');
+    fc.width = 512; fc.height = 512;
+    const fx = fc.getContext('2d');
+    fx.clearRect(0, 0, 512, 512);
+    fx.strokeStyle = '#168BD2'; fx.lineWidth = 18; fx.lineCap = 'round';
+    fx.beginPath(); fx.moveTo(120, 110); fx.lineTo(392, 372); fx.moveTo(392, 110); fx.lineTo(120, 372); fx.stroke();
+    fx.fillStyle = '#0E6DA8';
+    fx.font = '700 44px "Segoe UI", Arial, sans-serif';
+    fx.textAlign = 'center';
+    fx.fillText('CONCORDE X', 256, 450);
+    const fTex = new T.CanvasTexture(fc);
+    fTex.encoding = T.sRGBEncoding;
+    const fMat = new T.MeshBasicMaterial({ map: fTex, transparent: true, side: T.DoubleSide, depthWrite: false });
+    const fGeo = new T.PlaneGeometry(2.35, 2.35);
+    for (const side of [1, -1]) {
+      const dm = new T.Mesh(fGeo, fMat);
+      dm.position.set(side * 0.205, 4.9, -25.35);
+      dm.rotation.y = side * Math.PI / 2;
+      dm.scale.x = side;
+      dm.userData.part = 'fin';
+      g.add(dm);
+    }
+
+    const leadingLine = [];
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16;
+      const p = new T.QuadraticBezierCurve3(
+        new T.Vector3(0, 1.15, -20.2),
+        new T.Vector3(0, 5.1, -26.2),
+        new T.Vector3(0, 7.42, -27.3)
+      ).getPoint(t);
+      leadingLine.push(p);
+    }
+    const ll = new T.Line(new T.BufferGeometry().setFromPoints(leadingLine), new T.LineBasicMaterial({ color: 0x9aa7b1, transparent: true, opacity: 0.55 }));
+    ll.userData.part = 'fin';
+    g.add(ll);
+
+    explodeItems.push({ obj: g, base: g.position.clone(), offset: new T.Vector3(0, 3.1, -1.2) });
+  }
+
+  /* ============================================================
+     ENGINE NACELLES & OLYMPUS 593
+  ============================================================ */
+  const ENGINE_X = [2.08, 3.52];
+  const ENGINE_Z_FRONT = 4.55;
+  const ENGINE_LENGTH = 23.2;
+  const ENGINE_Y = -1.32;
+
+  function makeRoundedRectLoop(w, h, r, seg) {
+    const pts = [];
+    const corners = [[w / 2 - r, h / 2 - r, 0], [-w / 2 + r, h / 2 - r, Math.PI / 2], [-w / 2 + r, -h / 2 + r, Math.PI], [w / 2 - r, -h / 2 + r, Math.PI * 1.5]];
+    corners.forEach(([cx, cy, a0]) => {
+      for (let i = 0; i <= seg; i++) {
+        const a = a0 + (i / seg) * (Math.PI / 2);
+        pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+      }
+    });
+    return pts;
+  }
+
+  function makeLoftedNozzleGeometry(frontW, frontH, rearW, rearH, length, r, seg) {
+    const positions = [], indices = [];
+    const N = makeRoundedRectLoop(1, 1, 0.24, seg).length;
+    const f = makeRoundedRectLoop(frontW, frontH, r, seg);
+    const b = makeRoundedRectLoop(rearW, rearH, r * 0.7, seg);
+    for (let i = 0; i <= 10; i++) {
+      const t = i / 10;
+      const w = lerp(frontW, rearW, t), h = lerp(frontH, rearH, t);
+      const pts = makeRoundedRectLoop(w, h, lerp(r, r * 0.7, t), seg);
+      for (let j = 0; j < pts.length; j++) {
+        positions.push(pts[j][0], pts[j][1], lerp(0, -length, t));
+      }
+    }
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < N; j++) {
+        const jn = (j + 1) % N;
+        const a = i * N + j, bb = (i + 1) * N + j, c = (i + 1) * N + jn, d = i * N + jn;
+        indices.push(a, bb, d, bb, c, d);
+      }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  function buildOneNacelle(x, side, index) {
+    const eg = new T.Group();
+    eg.name = 'engine_' + (index + 1);
+    eg.position.set(x, ENGINE_Y, 0);
+
+    const shape = makeRoundedRectShape(1.32, 1.06, 0.3);
+    const shellGeo = new T.ExtrudeGeometry(shape, {
+      depth: ENGINE_LENGTH, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.07, bevelSegments: 2, curveSegments: 7
+    });
+    shellGeo.translate(0, 0, -ENGINE_LENGTH / 2);
+    const shell = new T.Mesh(shellGeo, MAT.nacelle);
+    shell.userData.part = 'nacelle';
+    shell.name = 'nacelle_shell';
+    shell.position.z = ENGINE_Z_FRONT - ENGINE_LENGTH / 2;
+    eg.add(shell);
+
+    // intake mouth
+    const mouthShape = makeRoundedRectShape(1.10, 0.86, 0.24);
+    const mouthGeo = new T.ShapeGeometry(mouthShape, 12);
+    const mouth = new T.Mesh(mouthGeo, MAT.intakeDark);
+    mouth.position.set(0, 0.01, ENGINE_Z_FRONT + 0.045);
+    mouth.userData.part = 'intake';
+    eg.add(mouth);
+
+    const innerDuct = new T.Mesh(new T.BoxGeometry(1.04, 0.8, 2.8), MAT.intakeDark);
+    innerDuct.position.set(0, 0, ENGINE_Z_FRONT - 1.4);
+    innerDuct.userData.part = 'intake';
+    eg.add(innerDuct);
+
+    // variable geometry ramps
+    for (let i = 0; i < 3; i++) {
+      const ramp = new T.Mesh(new T.BoxGeometry(1.02, 0.035, 0.66), MAT.steel);
+      ramp.position.set(0, 0.34 - i * 0.06, ENGINE_Z_FRONT - 0.35 - i * 0.5);
+      ramp.rotation.x = -0.34 + i * 0.08;
+      ramp.userData.part = 'intake';
+      eg.add(ramp);
+    }
+    const rampSide = new T.Mesh(new T.BoxGeometry(1.06, 0.36, 0.035), MAT.nacelleDark);
+    rampSide.position.set(0, 0.16, ENGINE_Z_FRONT - 0.16);
+    rampSide.userData.part = 'intake';
+    eg.add(rampSide);
+
+    // nozzle
+    const rearZ = ENGINE_Z_FRONT - ENGINE_LENGTH;
+    const nozzle = new T.Mesh(makeLoftedNozzleGeometry(1.14, 0.86, 0.92, 0.66, 3.1, 0.22, 4), MAT.nacelleDark);
+    nozzle.position.z = rearZ + 0.15;
+    nozzle.userData.part = 'nozzle';
+    eg.add(nozzle);
+    const nozzleDark = new T.Mesh(new T.CircleGeometry(0.42, 20), MAT.intakeDark);
+    nozzleDark.rotation.y = Math.PI;
+    nozzleDark.position.set(0, 0, rearZ - 2.9);
+    eg.add(nozzleDark);
+
+    // pylon
+    const pylon = new T.Mesh(new T.BoxGeometry(0.16, 0.78, 5.8), MAT.nacelleDark);
+    pylon.position.set(0, 0.82, -2.3);
+    pylon.userData.part = 'nacelle';
+    eg.add(pylon);
+
+    // simple internal rotor discs (revealed by transparency)
+    const rotor = new T.Group();
+    rotor.position.z = ENGINE_Z_FRONT - 3.0;
+    const discMat = new T.MeshStandardMaterial({ color: 0xa9b3ba, metalness: 0.85, roughness: 0.25 });
+    for (let i = 0; i < 4; i++) {
+      const d = new T.Mesh(new T.CylinderGeometry(0.38 - i * 0.03, 0.38 - i * 0.03, 0.12, 20), discMat);
+      d.rotation.x = Math.PI / 2;
+      d.position.z = -i * 0.5;
+      rotor.add(d);
+      for (let k = 0; k < 8; k++) {
+        const bl = new T.Mesh(new T.BoxGeometry(0.035, 0.23, 0.05), MAT.blade);
+        const a = (k / 8) * Math.PI * 2;
+        bl.position.set(Math.cos(a) * 0.24, Math.sin(a) * 0.24, -i * 0.5);
+        bl.rotation.z = a - Math.PI / 2;
+        rotor.add(bl);
+      }
+    }
+    rotor.userData.part = 'compressor';
+    eg.add(rotor);
+    groups.aircraftEngineRotors.push(rotor);
+
+    // exhaust glow
+    const flameGeo = new T.ConeGeometry(0.52, 4.0, 14, 1, true);
+    flameGeo.rotateX(-Math.PI / 2);
+    const flame = new T.Mesh(flameGeo, MAT.flame);
+    flame.position.set(0, 0, rearZ - 4.9);
+    flame.visible = false;
+    flame.renderOrder = 5;
+    eg.add(flame);
+    const flameCoreGeo = new T.ConeGeometry(0.24, 2.6, 12, 1, true);
+    flameCoreGeo.rotateX(-Math.PI / 2);
+    const flameCore = new T.Mesh(flameCoreGeo, MAT.flameCore);
+    flameCore.position.set(0, 0, rearZ - 4.25);
+    flameCore.visible = false;
+    eg.add(flameCore);
+    groups.aircraftFlames.push(flame, flameCore);
+
+    // engine group mirroring
+    aircraft.add(eg);
+    groups.engines.push(eg);
+    explodeItems.push({
+      obj: eg,
+      base: eg.position.clone(),
+      offset: new T.Vector3(side * 1.4, -2.6, -0.6)
+    });
+    return eg;
+  }
+
+  function buildNacelles() {
+    groups.engines = [];
+    groups.aircraftEngineRotors = [];
+    groups.aircraftFlames = [];
+    [-1, 1].forEach((side) => {
+      ENGINE_X.forEach((ex, i) => {
+        buildOneNacelle(side * ex, side, i + (side > 0 ? 2 : 0));
+      });
+    });
+  }
+
+  /* ============================================================
+     LANDING GEAR
+  ============================================================ */
+  function makeCylinderBetween(a, b, radius, material, radial) {
+    const dir = new T.Vector3().subVectors(b, a);
+    const len = dir.length();
+    const geo = new T.CylinderGeometry(radius, radius, len, radial || 10);
+    const mesh = new T.Mesh(geo, material);
+    mesh.position.copy(a).addScaledVector(dir, 0.5);
+    mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), dir.clone().normalize());
+    return mesh;
+  }
+
+  function makeWheel(radius, width) {
+    const g = new T.Group();
+    const tire = new T.Mesh(new T.CylinderGeometry(radius, radius, width, 22), MAT.tire);
+    tire.rotation.z = Math.PI / 2;
+    g.add(tire);
+    const hub = new T.Mesh(new T.CylinderGeometry(radius * 0.5, radius * 0.5, width + 0.025, 18), MAT.chrome);
+    hub.rotation.z = Math.PI / 2;
+    g.add(hub);
+    return g;
+  }
+
+  function buildMainGear(side) {
+    const g = new T.Group();
+    g.name = side > 0 ? 'main_gear_right' : 'main_gear_left';
+    g.position.set(side * 2.62, -0.55, -8.2);
+    g.userData.part = 'gear_main';
+    aircraft.add(g);
+    groups.gear.push(g);
+    if (side > 0) groups.gearMainRight = g; else groups.gearMainLeft = g;
+
+    const pivot = new T.Vector3(0, 0, 0);
+    const low = new T.Vector3(0, -2.0, 0);
+    const strut = makeCylinderBetween(pivot, low, 0.095, MAT.steel, 12);
+    strut.userData.part = 'gear_main';
+    g.add(strut);
+    const oleo = makeCylinderBetween(new T.Vector3(0, -1.1, 0), new T.Vector3(0, -2.35, 0), 0.065, MAT.chrome, 12);
+    oleo.userData.part = 'gear_main';
+    g.add(oleo);
+    const brace = makeCylinderBetween(new T.Vector3(0, -0.12, 0), new T.Vector3(side * 0.55, -1.55, 0.6), 0.045, MAT.steel, 8);
+    brace.userData.part = 'gear_main';
+    g.add(brace);
+    const bogie = new T.Mesh(new T.BoxGeometry(0.17, 0.17, 2.2), MAT.steel);
+    bogie.position.set(0, -2.45, 0);
+    bogie.userData.part = 'gear_main';
+    g.add(bogie);
+
+    [-0.78, 0.78].forEach((zz) => {
+      [-0.27, 0.27].forEach((xx) => {
+        const w = makeWheel(0.44, 0.25);
+        w.position.set(xx, -2.45, zz);
+        w.traverse((o) => { if (o.isMesh) o.userData.part = 'gear_main'; });
+        g.add(w);
+      });
+    });
+
+    const door = new T.Mesh(new T.BoxGeometry(0.06, 0.68, 2.1), MAT.nacelle);
+    door.position.set(side * -0.42, -0.75, 0.2);
+    door.userData.part = 'gear_main';
+    g.add(door);
+
+    explodeItems.push({ obj: g, base: g.position.clone(), offset: new T.Vector3(side * 1.2, -1.8, 0) });
+    return g;
+  }
+
+  function buildNoseGear() {
+    const g = new T.Group();
+    g.name = 'nose_gear';
+    g.position.set(0, -0.62, 16.6);
+    g.userData.part = 'gear_nose';
+    aircraft.add(g);
+    groups.gear.push(g);
+    groups.gearNose = g;
+
+    const strut = makeCylinderBetween(new T.Vector3(0, -0.1, 0), new T.Vector3(0, -1.75, 0.22), 0.075, MAT.steel, 12);
+    strut.userData.part = 'gear_nose';
+    g.add(strut);
+    const oleo = makeCylinderBetween(new T.Vector3(0, -1.0, 0.12), new T.Vector3(0, -2.12, 0.27), 0.052, MAT.chrome, 10);
+    oleo.userData.part = 'gear_nose';
+    g.add(oleo);
+    const brace = makeCylinderBetween(new T.Vector3(0, -0.25, 0), new T.Vector3(0.32, -1.3, -0.45), 0.035, MAT.steel, 8);
+    brace.userData.part = 'gear_nose';
+    g.add(brace);
+    const fork = new T.Mesh(new T.BoxGeometry(0.52, 0.09, 0.09), MAT.steel);
+    fork.position.set(0, -2.15, 0.27);
+    fork.userData.part = 'gear_nose';
+    g.add(fork);
+    [-0.28, 0.28].forEach((xx) => {
+      const w = makeWheel(0.36, 0.19);
+      w.position.set(xx, -2.17, 0.27);
+      w.traverse((o) => { if (o.isMesh) o.userData.part = 'gear_nose'; });
+      g.add(w);
+    });
+    const light = new T.Mesh(new T.SphereGeometry(0.075, 10, 8), new T.MeshBasicMaterial({ color: 0xfff4d0 }));
+    light.position.set(0, -0.55, 0.58);
+    light.userData.part = 'gear_nose';
+    g.add(light);
+
+    explodeItems.push({ obj: g, base: g.position.clone(), offset: new T.Vector3(0, -1.8, 1.2) });
+    return g;
+  }
+
+  function buildLandingGear() {
+    groups.gear = [];
+    buildMainGear(1);
+    buildMainGear(-1);
+    buildNoseGear();
+  }
+
+  /* ============================================================
+     ENGINE TEST BENCH — OLYMPUS 593 SCHEMATIC
+  ============================================================ */
+  function makeHalfShell(z0, z1, r0, r1, segZ, segA, aStart, aLen) {
+    const positions = [], indices = [];
+    for (let i = 0; i <= segZ; i++) {
+      const t = i / segZ;
+      const z = lerp(z0, z1, t);
+      const r = lerp(r0, r1, t);
+      for (let j = 0; j <= segA; j++) {
+        const a = aStart + (j / segA) * aLen;
+        positions.push(Math.cos(a) * r, Math.sin(a) * r, z);
+      }
+    }
+    const stride = segA + 1;
+    for (let i = 0; i < segZ; i++) {
+      for (let j = 0; j < segA; j++) {
+        const a = i * stride + j, b = (i + 1) * stride + j, c = (i + 1) * stride + j + 1, d = i * stride + j + 1;
+        indices.push(a, b, d, b, c, d);
+      }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  function makeBladeRing(count, radius, bladeLen, z, width) {
+    const g = new T.Group();
+    for (let k = 0; k < count; k++) {
+      const a = (k / count) * Math.PI * 2;
+      const bl = new T.Mesh(new T.BoxGeometry(width, bladeLen, 0.055), MAT.blade);
+      bl.position.set(Math.cos(a) * (radius + bladeLen * 0.38), Math.sin(a) * (radius + bladeLen * 0.38), z);
+      bl.rotation.z = a - Math.PI / 2;
+      g.add(bl);
+    }
+    return g;
+  }
+
+  function buildEngineBench() {
+    const b = engineBench;
+    b.position.set(0, 0.35, 0);
+    groups.benchGlow = [];
+
+    const benchLight = new T.PointLight(0xffffff, 1.35, 0, 2);
+    benchLight.position.set(6.5, 8.5, 6.5);
+    b.add(benchLight);
+    const benchFill = new T.PointLight(0xbfe1f5, 0.7, 0, 2);
+    benchFill.position.set(-6, 3.5, -5);
+    b.add(benchFill);
+
+    // mounting cradle
+    const cradleMat = new T.MeshStandardMaterial({ color: 0x77838d, metalness: 0.65, roughness: 0.4 });
+    [-2.4, 2.6].forEach((z) => {
+      const leg = new T.Mesh(new T.BoxGeometry(1.9, 0.12, 0.24), cradleMat);
+      leg.position.set(0, -1.12, z);
+      b.add(leg);
+      [-0.8, 0.8].forEach((x) => {
+        const post = new T.Mesh(new T.BoxGeometry(0.13, 0.85, 0.13), cradleMat);
+        post.position.set(x, -1.52, z);
+        b.add(post);
+      });
+    });
+    const base = new T.Mesh(new T.BoxGeometry(3.6, 0.1, 6.8), new T.MeshStandardMaterial({ color: 0xdde3e8, metalness: 0.4, roughness: 0.55 }));
+    base.position.set(0, -1.96, 0.1);
+    b.add(base);
+
+    // casings
+    const lower = new T.Mesh(makeHalfShell(5.2, -4.8, 0.98, 0.82, 30, 32, Math.PI, Math.PI), MAT.nacelle);
+    lower.userData.part = 'engine_shell';
+    b.add(lower);
+    const upper = new T.Mesh(makeHalfShell(5.2, -4.8, 0.98, 0.82, 30, 32, 0, Math.PI), MAT.nacelle);
+    upper.userData.part = 'engine_shell';
+    upper.name = 'bench_upper_shell';
+    b.add(upper);
+    groups.benchUpperShell = upper;
+
+    for (let z = 4.8; z >= -4.5; z -= 1.15) {
+      const t = (5.2 - z) / 10.0;
+      const ring = new T.Mesh(new T.TorusGeometry(lerp(0.98, 0.82, t) + 0.015, 0.018, 5, 36, Math.PI), MAT.steel);
+      ring.rotation.z = Math.PI;
+      ring.position.z = z;
+      b.add(ring);
+    }
+
+    // intake
+    const intake = new T.Mesh(makeHalfShell(6.5, 5.1, 1.1, 0.99, 8, 32, Math.PI, Math.PI), MAT.nacelleDark);
+    intake.userData.part = 'intake';
+    b.add(intake);
+    const lip = new T.Mesh(new T.TorusGeometry(0.99, 0.05, 8, 40), MAT.chrome);
+    lip.position.z = 6.22;
+    lip.userData.part = 'intake';
+    b.add(lip);
+
+    const spinner = new T.Mesh(new T.ConeGeometry(0.32, 1.5, 20), MAT.chrome);
+    spinner.rotation.x = Math.PI / 2;
+    spinner.position.z = 5.9;
+    spinner.userData.part = 'intake';
+    b.add(spinner);
+
+    // variable ramps
+    const rampGroup = new T.Group();
+    for (let i = 0; i < 3; i++) {
+      const ramp = new T.Mesh(new T.BoxGeometry(1.35, 0.04, 0.8), MAT.steel);
+      ramp.position.set(0, 0.52 - i * 0.1, 5.75 - i * 0.6);
+      ramp.rotation.x = -0.2 - i * 0.12;
+      ramp.userData.part = 'intake';
+      rampGroup.add(ramp);
+    }
+    b.add(rampGroup);
+
+    // compressor
+    const compressor = new T.Group();
+    compressor.name = 'bench_compressor';
+    for (let i = 0; i < 8; i++) {
+      const r = 0.78 - i * 0.037;
+      const z = 4.6 - i * 0.43;
+      const disc = new T.Mesh(new T.CylinderGeometry(r, r, 0.085, 30), MAT.blade);
+      disc.rotation.x = Math.PI / 2;
+      disc.position.z = z;
+      disc.userData.part = 'compressor';
+      compressor.add(disc);
+      const blades = makeBladeRing(14, r, 0.2, z + 0.02, 0.045);
+      blades.traverse((o) => { if (o.isMesh) o.userData.part = 'compressor'; });
+      compressor.add(blades);
+      const drum = new T.Mesh(new T.CylinderGeometry(r * 0.7, r * 0.7, 0.1, 24), MAT.steel);
+      drum.rotation.x = Math.PI / 2;
+      drum.position.z = z;
+      compressor.add(drum);
+    }
+    b.add(compressor);
+    groups.benchCompressor = compressor;
+
+    const shaft = new T.Mesh(new T.CylinderGeometry(0.10, 0.10, 9.4, 16), MAT.chrome);
+    shaft.rotation.x = Math.PI / 2;
+    shaft.position.z = 0.1;
+    b.add(shaft);
+
+    // compressor stator rings
+    for (let i = 0; i < 7; i++) {
+      const r = 0.84 - i * 0.038;
+      const ring = new T.Mesh(new T.TorusGeometry(r, 0.028, 5, 34), MAT.steel);
+      ring.position.z = 4.35 - i * 0.43;
+      b.add(ring);
+    }
+
+    // combustor
+    const combustor = new T.Group();
+    combustor.name = 'bench_combustor';
+    const canMat = new T.MeshStandardMaterial({ color: 0x8a6f56, metalness: 0.82, roughness: 0.38, emissive: 0x1a0a02, emissiveIntensity: 0.4 });
+    const cRing = new T.Mesh(new T.TorusGeometry(0.55, 0.22, 12, 34), canMat);
+    cRing.userData.part = 'combustor';
+    combustor.add(cRing);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const can = new T.Mesh(new T.CylinderGeometry(0.12, 0.15, 0.72, 14), canMat);
+      can.rotation.x = Math.PI / 2;
+      can.position.set(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0);
+      can.userData.part = 'combustor';
+      combustor.add(can);
+    }
+    combustor.position.z = 0.25;
+    b.add(combustor);
+    groups.benchCombustor = combustor;
+
+    const combGlow = new T.Mesh(new T.TorusGeometry(0.55, 0.15, 10, 34), MAT.flame);
+    combGlow.position.z = 0.25;
+    combGlow.visible = false;
+    b.add(combGlow);
+    groups.benchGlow.push(combGlow);
+
+    // turbine
+    const turbine = new T.Group();
+    turbine.name = 'bench_turbine';
+    const turbDiscs = [];
+    for (let i = 0; i < 3; i++) {
+      const z = -1.0 - i * 0.42;
+      const r = 0.6 - i * 0.035;
+      const disc = new T.Mesh(new T.CylinderGeometry(r, r, 0.1, 28), MAT.hotMetal);
+      disc.rotation.x = Math.PI / 2;
+      disc.position.z = z;
+      disc.userData.part = 'turbine';
+      turbine.add(disc);
+      const blades = makeBladeRing(18, r, 0.17, z + 0.02, 0.04);
+      blades.traverse((o) => { if (o.isMesh) o.userData.part = 'turbine'; });
+      turbine.add(blades);
+      turbDiscs.push(disc);
+    }
+    b.add(turbine);
+    groups.benchTurbine = turbine;
+
+    // afterburner
+    const abShell = new T.Mesh(makeHalfShell(-2.0, -5.1, 0.72, 0.6, 12, 28, Math.PI, Math.PI), MAT.hotMetal);
+    abShell.userData.part = 'afterburner';
+    b.add(abShell);
+    for (let i = 0; i < 3; i++) {
+      const holder = new T.Mesh(new T.TorusGeometry(0.55 - i * 0.05, 0.045, 7, 30, Math.PI), MAT.steel);
+      holder.rotation.z = Math.PI;
+      holder.position.z = -2.6 - i * 0.7;
+      holder.userData.part = 'afterburner';
+      b.add(holder);
+    }
+    const abGlowGeo = new T.ConeGeometry(0.44, 4.6, 18, 1, true);
+    abGlowGeo.rotateX(-Math.PI / 2);
+    const abGlow = new T.Mesh(abGlowGeo, MAT.flame);
+    abGlow.position.z = -7.5;
+    abGlow.visible = false;
+    abGlow.userData.part = 'afterburner';
+    b.add(abGlow);
+    groups.benchGlow.push(abGlow);
+    const abCoreGeo = new T.ConeGeometry(0.2, 2.9, 14, 1, true);
+    abCoreGeo.rotateX(-Math.PI / 2);
+    const abCore = new T.Mesh(abCoreGeo, MAT.flameCore);
+    abCore.position.z = -6.7;
+    abCore.visible = false;
+    b.add(abCore);
+    groups.benchGlow.push(abCore);
+
+    // nozzle petals
+    const nozzle = new T.Group();
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const petal = new T.Mesh(new T.BoxGeometry(0.13, 0.05, 1.05), MAT.nacelleDark);
+      petal.position.set(Math.cos(a) * 0.7, Math.sin(a) * 0.7, -5.7);
+      petal.rotation.z = a - Math.PI / 2;
+      petal.rotation.x = 0.2;
+      petal.userData.part = 'nozzle';
+      nozzle.add(petal);
+    }
+    const nozzleRing = new T.Mesh(new T.TorusGeometry(0.74, 0.035, 6, 36), MAT.steel);
+    nozzleRing.position.z = -5.15;
+    nozzleRing.userData.part = 'nozzle';
+    nozzle.add(nozzleRing);
+    b.add(nozzle);
+    groups.benchNozzle = nozzle;
+
+    // airflow
+    const count = 280;
+    const pos = new Float32Array(count * 3);
+    const seeds = [];
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * 0.72;
+      pos[i * 3] = Math.cos(a) * r;
+      pos[i * 3 + 1] = Math.sin(a) * r;
+      pos[i * 3 + 2] = 5.9 - Math.random() * 12;
+      seeds.push({ a, r, z: 5.9 - Math.random() * 12, speed: 0.7 + Math.random() * 0.7 });
+    }
+    const airGeo = new T.BufferGeometry();
+    airGeo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    const air = new T.Points(airGeo, MAT.air);
+    air.userData.part = 'airflow';
+    air.raycast = function () {};
+    b.add(air);
+    groups.benchAir = air;
+    groups.airSeeds = seeds;
+
+    // directional flow markers outside the cutaway casing
+    const arrowMat = new T.MeshBasicMaterial({ color: 0x2ba0d8, transparent: true, opacity: 0.85 });
+    groups.benchArrowGroup = new T.Group();
+    groups.benchArrows = [];
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 + 0.12;
+      const arrow = new T.Mesh(new T.ConeGeometry(0.055, 0.28, 8), arrowMat);
+      arrow.rotation.x = -Math.PI / 2;
+      arrow.userData.part = 'airflow';
+      arrow.raycast = function () {};
+      arrow.position.set(Math.cos(a) * 1.18, Math.sin(a) * 1.18, 5.6 - (i % 4) * 3.0);
+      groups.benchArrowGroup.add(arrow);
+      groups.benchArrows.push({ mesh: arrow, a: a, r: 1.18 + (i % 3) * 0.12, z: 5.6 - (i % 4) * 3.0, speed: 0.8 + (i % 5) * 0.12 });
+    }
+    b.add(groups.benchArrowGroup);
+
+    // labels
+    const labels = [
+      { t: '可变几何进气道', z: 5.6, y: 2.1, c: '#168BD2' },
+      { t: '压气机', z: 3.4, y: 1.55, c: '#168BD2' },
+      { t: '燃烧室', z: 0.3, y: 2.25, c: '#C88A1A' },
+      { t: '涡轮', z: -1.4, y: 1.5, c: '#168BD2' },
+      { t: '加力燃烧室', z: -3.3, y: 2.15, c: '#C88A1A' },
+      { t: '喷管', z: -5.6, y: 1.4, c: '#168BD2' }
+    ];
+    groups.benchLabels = new T.Group();
+    groups.benchLabels.visible = false;
+    labels.forEach((l, i) => {
+      const sprite = makeLabelSprite(l.t, l.c);
+      sprite.scale.set(3.3, 0.83, 1);
+      sprite.position.set(2.85, l.y + 0.75, l.z);
+      groups.benchLabels.add(sprite);
+      const pts = [new T.Vector3(0.45, 0.35, l.z), new T.Vector3(2.0, l.y + 0.7, l.z), new T.Vector3(2.2, l.y + 0.75, l.z)];
+      const line = new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: 0x9fb3c1, transparent: true, opacity: 0.7 }));
+      groups.benchLabels.add(line);
+    });
+    b.add(groups.benchLabels);
+
+    // engine mode camera is set when entering.
+  }
+
+  function indexParts() {
+    Object.keys(partsIndex).forEach((k) => delete partsIndex[k]);
+    [aircraft, engineBench].forEach((root) => {
+      root.traverse((o) => {
+        if (o.userData && o.userData.part) {
+          const key = o.userData.part;
+          if (!partsIndex[key]) partsIndex[key] = [];
+          partsIndex[key].push(o);
+        }
+      });
+    });
+  }/* ============================================================
+     PART INFORMATION
+  ============================================================ */
+  const PART_INFO = {
+    aircraft: {
+      code: 'AC-000', title: '协和式超音速客机', en: 'Concorde · Ogival Delta Wing Aircraft',
+      desc: '协和式是唯一投入商业运营的超音速客机。本平台以实时三维模型呈现其无尾修形三角翼、四台 Olympus 593 加力涡喷发动机、下垂式机头与可收放起落架。点击三维模型或左侧结构目录中的部件以读取工程信息。',
+      params: [['机身长度', '61.66 m'], ['翼展', '25.60 m'], ['参考机翼面积', '358 m²'], ['最大巡航马赫数', 'Mach 2.04']],
+      disclaimer: true
+    },
+    fuselage: {
+      code: 'AC-FUS-001', title: '机身结构', en: 'Fuselage · Semi-monocoque',
+      desc: '细长流线型半硬壳机身，贯穿全机的承载主干。前段为驾驶舱与下垂机头铰接区，中段与修形三角翼融合，后段向上过渡为垂直尾翼根部。模型外形按 61.66 m 全长比例重建。',
+      params: [['结构形式', '半硬壳式'], ['机身长度', '61.66 m'], ['最大直径', '约 2.88 m'], ['客舱布局', '单通道 / 4 列'], ['主要材料', '铝合金']],
+      disclaimer: true
+    },
+    fuselage_structure: {
+      code: 'AC-FUS-STR', title: '机身内部结构', en: 'Fuselage Frames & Stringers',
+      desc: '机身内部以环框、纵向长桁和客舱地板梁构成承载骨架。三维修模为工程示意，展示结构拓扑与空间关系，并非依据制造图纸复原。',
+      params: [['环框间距', '约 2.35 m（示意）'], ['纵向长桁', '8 条（示意）'], ['客舱地板', '位于机身中下部'], ['用途', '结构原理展示']],
+      disclaimer: true
+    },
+    nose: {
+      code: 'AC-NOS-001', title: '下垂式机头', en: 'Droop Nose Assembly',
+      desc: '协和式的标志性机构。为改善起降时飞行员的下视视野，机头可在正常位置与下垂位置之间切换。模型在驾驶舱前方设置铰接点，并支持 0°、5°、12.5° 三种姿态的平滑动画。',
+      params: [['正常位置', '0°'], ['起飞位置', '5°（示意）'], ['着陆位置', '12.5°（示意）'], ['驱动方式', '液压作动（示意）'], ['铰接位置', '驾驶舱前方']],
+      disclaimer: true
+    },
+    wing: {
+      code: 'AC-WNG-001', title: '修形三角翼', en: 'Ogival Delta Wing',
+      desc: '协和式采用无尾修形三角翼（Ogival Delta）。机翼前缘为连续弯曲的 ogee 曲线，由根部的大后掠逐渐过渡至翼尖；后缘平顺收束，翼尖尖锐。左右机翼镜像对称，与机身中后段平滑融合。没有水平尾翼，俯仰与滚转由后缘升降副翼控制。',
+      params: [['翼展', '25.60 m'], ['参考面积', '358 m²'], ['前缘后掠角', '约 60°'], ['布局', '无尾修形三角翼'], ['翼型厚度比', '约 3% – 4%（示意）'], ['后缘控制面', '升降副翼']],
+      disclaimer: true
+    },
+    spar_main: {
+      code: 'AC-WNG-SP1', title: '主翼梁', en: 'Main Spar',
+      desc: '沿机翼展向布置的主要承弯构件，位于约 25% 弦长处。多梁式三角翼通过主梁将升力传递至机身中央加强框。三维梁结构为工程示意，未按真实截面与连接细节建模。',
+      params: [['展向位置', '约 25% 弦长'], ['结构角色', '主要承弯构件'], ['布置方向', '展向'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    spar_rear: {
+      code: 'AC-WNG-SP2', title: '后翼梁', en: 'Rear Spar',
+      desc: '位于约 70% 弦长处的次级翼梁，与主梁、翼肋和蒙皮共同组成翼盒结构，同时为后缘升降副翼提供支承。',
+      params: [['展向位置', '约 70% 弦长'], ['结构角色', '翼盒后缘构件'], ['布置方向', '展向'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    ribs: {
+      code: 'AC-WNG-RIB', title: '翼肋', en: 'Wing Ribs',
+      desc: '翼肋沿展向按一定间距排列，维持翼型截面形状并将蒙皮气动载荷传递到翼梁。本模型按机翼平面形状自动生成 12 道示意翼肋。',
+      params: [['数量', '每侧 12 道（示意）'], ['功能', '保持翼型 / 传递载荷'], ['布置', '垂直弦向截面'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    stringers: {
+      code: 'AC-WNG-STR', title: '纵向加强件', en: 'Wing Stringers',
+      desc: '沿机翼展向布置的细长加强件，支撑蒙皮并提高其抗屈曲能力。示意模型中布置于翼盒上表面内侧。',
+      params: [['数量', '每侧 6 条（示意）'], ['功能', '蒙皮支承 / 抗屈曲'], ['方向', '沿展向'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    elevon: {
+      code: 'AC-WNG-ELE', title: '升降副翼', en: 'Elevons',
+      desc: '无尾三角翼布局的后缘控制面。通过同向偏转实现俯仰控制，通过差动偏转实现滚转控制。协和式沿后缘布置多段升降副翼。',
+      params: [['功能', '俯仰 + 滚转'], ['布局', '后缘多段式'], ['操纵', '电传/液压（示意）'], ['模型属性', '外形示意']],
+      disclaimer: true
+    },
+    fin: {
+      code: 'AC-FIN-001', title: '垂直尾翼', en: 'Vertical Stabiliser',
+      desc: '大面积后掠垂直尾翼，用于提供航向稳定性。协和式没有水平尾翼，因此垂直尾翼与方向舵对偏航控制尤为重要。',
+      params: [['布局', '单垂尾'], ['后掠形式', '大后掠'], ['功能', '航向稳定 / 偏航配平'], ['模型属性', '按外形重建']]
+    },
+    rudder: {
+      code: 'AC-FIN-RUD', title: '方向舵', en: 'Rudder',
+      desc: '铰接于垂直尾翼后缘的航向操纵面，与升降副翼共同完成飞行姿态控制。',
+      params: [['功能', '偏航控制'], ['位置', '垂尾后缘'], ['模型属性', '外形示意']]
+    },
+    nacelle: {
+      code: 'AC-NAC-001', title: '发动机短舱', en: 'Nacelle Assembly ×4',
+      desc: '机翼下方布置四个独立的发动机短舱，内装四台 Olympus 593 加力涡轮喷气发动机。短舱前端的矩形进气道配合可变几何调节系统，适应从小速度到大马赫数的宽范围工况。',
+      params: [['数量', '4 台'], ['布局', '机翼下方两侧各 2 台'], ['发动机', 'Olympus 593'], ['单台加力推力', '约 169 kN'], ['模型属性', '外形 / 内部示意']],
+      disclaimer: true
+    },
+    intake: {
+      code: 'AC-NAC-INT', title: '可变几何进气道', en: 'Variable Geometry Intake',
+      desc: '超音速飞行时需要控制进气激波位置与气流速度，使压气机入口保持亚音速。模型以多级调节斜板与进气唇口示意这一机构。',
+      params: [['形式', '矩形 / 可变几何'], ['作用', '激波控制 / 减速增压'], ['布置', '短舱前端'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    nozzle: {
+      code: 'AC-NAC-NOZ', title: '喷管', en: 'Variable Nozzle',
+      desc: '将涡轮与加力燃烧室排出的高温燃气加速排出，产生推力。模型以收敛形喷口和外部调节片表现其功能位置。',
+      params: [['形式', '可变收敛喷管（示意）'], ['功能', '燃气加速 / 推力产生'], ['位置', '短舱尾端'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    engine_shell: {
+      code: 'ENG-CAS-01', title: '发动机机匣', en: 'Engine Casing',
+      desc: 'Olympus 593 发动机承力机匣。展示模式采用下半剖切壳体，便于观察压气机、燃烧室、涡轮与加力燃烧室的相对位置。',
+      params: [['展示方式', '半剖切剖面'], ['发动机类型', '加力涡轮喷气'], ['模型属性', '结构示意']],
+      disclaimer: true
+    },
+    compressor: {
+      code: 'ENG-CMP-01', title: '压气机', en: 'Axial Compressor',
+      desc: '多级轴流压气机将进入发动机的空气逐级压缩，提高压力后送入燃烧室。模型中由多级转子盘与叶片环表示，运行时随 N1 转速旋转。',
+      params: [['形式', '多级轴流式'], ['级数', '示意 8 级'], ['驱动', '涡轮'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    combustor: {
+      code: 'ENG-CMB-01', title: '燃烧室', en: 'Combustion Chamber',
+      desc: '燃油与压缩空气混合燃烧，向涡轮与加力燃烧室提供高温高压燃气。模型以环形燃烧区和火焰筒示意结构布置。',
+      params: [['形式', '环形 / 火焰筒（示意）'], ['功能', '化学能 → 热能'], ['点火', '高空再点火能力'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    turbine: {
+      code: 'ENG-TRB-01', title: '涡轮', en: 'Turbine',
+      desc: '高温燃气通过涡轮叶片膨胀做功，驱动压气机旋转。模型以多级涡轮盘示意，运行时与压气机共轴转动。',
+      params: [['形式', '多级轴流式'], ['功能', '提取功率驱动压气机'], ['级数', '示意 3 级'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    afterburner: {
+      code: 'ENG-AB-01', title: '加力燃烧室', en: 'Afterburner / Reheat',
+      desc: '在涡轮后的燃气中再次喷油燃烧，短暂大幅增加推力，用于起飞与超音速加速。开启加力时模型显示尾焰并提高模拟推力。',
+      params: [['功能', '应急 / 超音速推力增强'], ['燃料', 'Jet A-1 / 航空煤油'], ['使用阶段', '起飞、跨音速加速'], ['模型属性', '工程示意']],
+      disclaimer: true
+    },
+    airflow: {
+      code: 'ENG-AIR-01', title: '气流方向', en: 'Airflow Visualisation',
+      desc: '蓝色粒子示意气流由进气道进入发动机、经压气机压缩、燃烧膨胀并由喷管排出的方向。粒子速度随模拟转速变化。',
+      params: [['流向', '前 → 后'], ['速度', '随 N1 转速变化'], ['性质', '可视化示意']]
+    },
+    gear_main: {
+      code: 'AC-GER-001', title: '主起落架', en: 'Main Landing Gear',
+      desc: '布置在机翼与机身下方的主起落架，采用四轮小车式布置，起飞后向内收入机翼/机身结构。三维收放为运动逻辑示意。',
+      params: [['形式', '四轮小车式'], ['数量', '左右各 1 组'], ['收放方向', '向内收起'], ['模型属性', '运动示意']],
+      disclaimer: true
+    },
+    gear_nose: {
+      code: 'AC-GER-002', title: '前起落架', en: 'Nose Landing Gear',
+      desc: '布置在下垂机头后方的双轮前起落架，负责地面转向与支撑。收起时向前收入机身。',
+      params: [['形式', '双轮前起落架'], ['位置', '机头后方'], ['收放方向', '向前收起'], ['模型属性', '运动示意']],
+      disclaimer: true
+    }
+  };
+
+  PART_INFO.engine_bench = {
+    code: 'ENG-OLY-593', title: 'Olympus 593 加力涡轮喷气发动机', en: 'Rolls-Royce / Snecma Olympus 593',
+    desc: '协和式的动力核心。Olympus 593 是带加力燃烧室的轴流涡轮喷气发动机，通过可变几何进气道适应宽速域工况。此测试台以半剖切方式展示进气道、压气机、燃烧室、涡轮、加力燃烧室与喷管的空间关系，内部结构为工程示意。',
+    params: [['布局', '双转子加力涡喷'], ['数量', '4 台'], ['单台加力推力', '约 169 kN'], ['进气道', '可变几何矩形'], ['模型属性', '工程示意 / 半剖切']],
+    disclaimer: true
+  };
+
+  const PHASES = {
+    ground: { label: '地面', en: 'GROUND', desc: 'GROUND IDLE · GEAR DOWN', speed: 0, mach: 0, alt: 0, pitch: 0, roll: 0, yaw: 0, rpm: 0.18, gear: 1, nose: 5, ab: false, duration: 5 },
+    takeoff: { label: '起飞', en: 'TAKEOFF', desc: 'REHEAT TAKEOFF · GEAR DOWN', speed: 385, mach: 0.32, alt: 760, pitch: 10.5, roll: 0, yaw: 0, rpm: 0.97, gear: 1, nose: 5, ab: true, duration: 9 },
+    climb: { label: '爬升', en: 'CLIMB', desc: 'SUBSONIC / TRANSONIC CLIMB', speed: 1950, mach: 1.62, alt: 15200, pitch: 7.5, roll: 1.2, yaw: 0, rpm: 0.99, gear: 0, nose: 0, ab: false, duration: 9 },
+    cruise: { label: 'Mach 2 巡航', en: 'CRUISE', desc: 'MACH 2.04 · 18,000 M · GEAR UP', speed: 2179, mach: 2.04, alt: 18000, pitch: 2.1, roll: 0, yaw: 0, rpm: 1.0, gear: 0, nose: 0, ab: false, duration: 9 },
+    landing: { label: '着陆', en: 'LANDING', desc: 'APPROACH · GEAR DOWN · NOSE 5°', speed: 330, mach: 0.27, alt: 0, pitch: 4.0, roll: 0, yaw: 0, rpm: 0.5, gear: 1, nose: 5, ab: false, duration: 8 }
+  };
+  const PHASE_ORDER = ['ground', 'takeoff', 'climb', 'cruise', 'landing'];
+  const PHASE_TOTAL = PHASE_ORDER.reduce((a, k) => a + PHASES[k].duration, 0);
+  const MODE_LABELS = {
+    overview: ['AIRCRAFT OVERVIEW', '整机展示', 'MODEL READY · OGIVAL DELTA WING · 4 × OLYMPUS 593'],
+    structure: ['ENGINEERING STRUCTURE', '工程结构', 'STRUCTURE MODE · SCHEMATIC INTERNALS · WING / FUSELAGE / SYSTEMS'],
+    explode: ['EXPLODED ASSEMBLY', '爆炸视图', 'EXPLODED VIEW · SPATIAL DISASSEMBLY · DRAG TO ORBIT'],
+    engine: ['PROPULSION BENCH', '发动机', 'OLYMPUS 593 · CUTAWAY TEST BENCH · SIMULATED N1'],
+    flight: ['FLIGHT SIMULATION', '飞行模拟', 'FLIGHT DEMO · SIMULATED DATA ONLY · NOT TELEMETRY'],
+    data: ['DATA CENTRE', '数据中心', 'ENGINEERING DATA · PUBLIC REFERENCE + SCHEMATIC MODEL']
+  };
+
+  let DEFAULT_INFO_HTML = '';
+  let highlightNode = null;
+  let highlightEdge = null;
+  let uiClock = 0;
+  let lastFrameTime = performance.now();
+  let synthTime = 0;
+
+  function isVisibleInScene(obj) {
+    let o = obj;
+    while (o && o !== scene) {
+      if (o.visible === false) return false;
+      o = o.parent;
+    }
+    return true;
+  }
+
+  /* ============================================================
+     UI SETUP
+  ============================================================ */
+  function setupUI() {
+    state.noseCurrent = 0;
+    DEFAULT_INFO_HTML = $('partInfo').innerHTML;
+    prepareBenchGlowMaterials();
+
+    document.querySelectorAll('#mainNav .nav-btn').forEach((btn) => {
+      btn.addEventListener('click', () => setMode(btn.dataset.mode));
+    });
+
+    const tree = $('structureTree');
+    tree.querySelectorAll('.tree-item').forEach((item) => {
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.part-dot')) return;
+        selectPart(item.dataset.part);
+      });
+      const dot = item.querySelector('.part-dot');
+      if (dot) {
+        dot.title = '显示 / 隐藏该部件';
+        dot.style.cursor = 'pointer';
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleTreeVisibility(item.dataset.part, item);
+        });
+      }
+    });
+
+    $('swTransparent').addEventListener('click', () => setTransparent(!state.transparent));
+    $('swCut').addEventListener('click', () => setCut(!state.cut));
+    $('swInternal').addEventListener('click', () => setInternal(!state.internal));
+
+    document.querySelectorAll('#structChips .chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const key = chip.dataset.struct;
+        let nodes = [];
+        if (key === 'wing') nodes = [groups.wingSkinRight, groups.wingSkinLeft].filter(Boolean);
+        else {
+          [groups.wingRight, groups.wingLeft].forEach((wg) => {
+            if (wg) wg.traverse((o) => { if (o.userData && o.userData.part === key && o.isMesh) nodes.push(o); });
+          });
+        }
+        if (!nodes.length) return;
+        const turnOn = nodes[0].visible === false;
+        nodes.forEach((n) => { n.visible = turnOn; });
+        chip.classList.toggle('on', turnOn);
+        chip.classList.toggle('off', !turnOn);
+        if (turnOn && !state.internal) setInternal(true, true);
+        toast((turnOn ? '显示：' : '隐藏：') + chip.textContent);
+      });
+    });
+    $('cutRange').addEventListener('input', (e) => {
+      clipPlane.constant = parseFloat(e.target.value);
+      $('cutVal').textContent = parseFloat(e.target.value).toFixed(1) + ' m';
+    });
+    $('explodeRange').addEventListener('input', (e) => setExplode(parseInt(e.target.value, 10)));
+
+    document.querySelectorAll('.view-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const v = btn.dataset.view;
+        if (v === 'resetAll') {
+          resetScene();
+        } else {
+          setView(v);
+        }
+      });
+    });
+
+    document.querySelectorAll('#rightTabs .tab').forEach((tab) => {
+      tab.addEventListener('click', () => setRightTab(tab.dataset.tab));
+    });
+
+    document.querySelectorAll('#droopSeg button').forEach((btn) => {
+      btn.addEventListener('click', () => setDroop(parseFloat(btn.dataset.droop)));
+    });
+    $('btnGearDown').addEventListener('click', () => setGear(true));
+    $('btnGearUp').addEventListener('click', () => setGear(false));
+    $('btnEngineStart').addEventListener('click', startEngines);
+    $('btnEngineStop').addEventListener('click', stopEngines);
+    $('btnAB').addEventListener('click', toggleAfterburner);
+    if ($('btnBenchCut')) $('btnBenchCut').addEventListener('click', () => {
+      state.benchCut = !state.benchCut;
+      groups.benchUpperShell.visible = !state.benchCut;
+    if ($('engineLegend')) $('engineLegend').style.display = 'none';
+      $('btnBenchCut').classList.toggle('active', state.benchCut);
+      $('btnBenchCut').textContent = state.benchCut ? '剖面' : '完整';
+      toast(state.benchCut ? '发动机剖面视图' : '发动机完整外罩');
+    });
+    groups.benchUpperShell.visible = !state.benchCut;
+
+    document.querySelectorAll('#phaseSeg button').forEach((btn) => {
+      btn.addEventListener('click', () => setPhase(btn.dataset.phase, false));
+    });
+    document.querySelectorAll('#tlTrack .tl-seg').forEach((seg) => {
+      seg.addEventListener('click', (e) => {
+        const key = seg.dataset.phase;
+        const rect = $('tlTrack').getBoundingClientRect();
+        const local = clamp((e.clientX - rect.left) / rect.width * PHASE_TOTAL, 0, PHASE_TOTAL - 0.001);
+        let acc = 0, phaseStart = 0;
+        for (const k of PHASE_ORDER) { if (k === key) { phaseStart = acc; break; } acc += PHASES[k].duration; }
+        setPhase(key, false);
+        state.phaseTime = clamp(local - phaseStart, 0, PHASES[key].duration);
+        syncTimelineSegments();
+      });
+    });
+    $('btnPlay').addEventListener('click', togglePlay);
+
+    const bindAttitude = (id, key, out) => {
+      const input = $(id);
+      input.addEventListener('input', () => {
+        state.manual[key] = parseFloat(input.value);
+        $(out).textContent = parseFloat(input.value).toFixed(1).replace('.0', '') + '°';
+      });
+    };
+    bindAttitude('attPitch', 'pitch', 'attPitchVal');
+    bindAttitude('attRoll', 'roll', 'attRollVal');
+    bindAttitude('attYaw', 'yaw', 'attYawVal');
+
+    $('btnFull').addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', () => setTimeout(onResize, 120));
+    $('btnPresent').addEventListener('click', () => setPresentation(true));
+    $('btnPresentExit').addEventListener('click', () => setPresentation(false));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      if (e.key === 'Escape') {
+        if (state.presentation) { setPresentation(false); return; }
+        if (document.fullscreenElement) { document.exitFullscreen(); return; }
+        clearSelection();
+      } else if (e.key === 'p' || e.key === 'P') {
+        setPresentation(!state.presentation);
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetView();
+      } else if (e.key === 'e' || e.key === 'E') {
+        setMode('explode');
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      }
+    });
+
+    setTransparent(false, true);
+    setInternal(false, true);
+    setCut(false, true);
+    setExplode(0, true);
+    updateNav('overview');
+    updateModeUI();
+    syncGearButtons();
+    syncDroopButtons();
+    syncEngineButtons();
+    syncTimelineSegments();
+    updateReadouts();
+    updatePlayIcon();
+    animate();
+  }
+
+  function prepareBenchGlowMaterials() {
+    if (!groups.benchGlow) return;
+    groups.benchGlow[0].material = MAT.flame.clone();
+    groups.benchGlow[1].material = MAT.flame.clone();
+    groups.benchGlow[2].material = MAT.flameCore.clone();
+    groups.benchGlow.forEach((m) => { m.material.opacity = 0; m.visible = false; });
+    groups.aircraftFlames.forEach((m) => { m.visible = false; });
+  }
+
+  /* ============================================================
+     UI STATE ACTIONS
+  ============================================================ */
+  function setMode(mode, silent) {
+    if (!MODE_LABELS[mode]) return;
+    state.mode = mode;
+
+    if (mode === 'engine') {
+      setTransparent(false, true);
+      setInternal(false, true);
+      setCut(false, true);
+      enterEngineBench(true);
+      setRightTab('info');
+      updateNav(mode);
+      updateModeUI();
+      return;
+    }
+    if (state.engineBenchOn) leaveEngineBench(true);
+
+    if (mode === 'overview') {
+      setTransparent(false, true);
+      setInternal(false, true);
+      setCut(false, true);
+      setExplode(0, true);
+      resetView();
+      setRightTab('info');
+      if (!silent) toast('整机展示 · 拖动旋转 / 滚轮缩放 / 右键平移');
+    } else if (mode === 'structure') {
+      setCut(false, true);
+      setExplode(0, true);
+      setInternal(true, true);
+      setTransparent(true, true);
+      flyTo(0.86, 1.10, 82, new T.Vector3(0, 0.5, 0), 1.1);
+      setRightTab('info');
+      if (!silent) toast('工程结构模式 · 蒙皮已透明化 · 内部为工程示意');
+    } else if (mode === 'explode') {
+      setTransparent(false, true);
+      setInternal(false, true);
+      setCut(false, true);
+      setExplode(100, true);
+      flyTo(0.78, 1.06, 108, new T.Vector3(0, 0.6, 0), 1.1);
+      setRightTab('info');
+      if (!silent) toast('爆炸拆解视图 · 按部件空间关系分离');
+    } else if (mode === 'flight') {
+      setTransparent(false, true);
+      setInternal(false, true);
+      setCut(false, true);
+      setExplode(0, true);
+      setRightTab('flight');
+      flyTo(0.9, 1.17, 92, new T.Vector3(0, 0.8, 0), 1.0);
+      if (!silent) toast('飞行模拟 · 点击播放或选择飞行阶段 · 数据均为模拟');
+    } else if (mode === 'data') {
+      setRightTab('spec');
+      if (!silent) toast('数据中心 · 公开参考参数与模型结构说明');
+    }
+
+    updateNav(mode);
+    updateModeUI();
+  }
+
+  function updateNav(mode) {
+    document.querySelectorAll('#mainNav .nav-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+  }
+
+  function updateModeUI() {
+    const info = MODE_LABELS[state.mode] || MODE_LABELS.overview;
+    $('modeBadge').innerHTML = '<strong>CONCORDE X</strong> · ' + info[0];
+    $('vpStatus').textContent = info[2];
+    const im = $('infoMode');
+    if (im) im.textContent = info[1];
+  }
+
+  function setRightTab(name) {
+    state.panelTab = name;
+    document.querySelectorAll('#rightTabs .tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.tab-pane').forEach((p) => p.classList.toggle('active', p.id === 'pane-' + name));
+  }
+
+  function setTransparent(on, silent) {
+    const mats = [MAT.skin, MAT.wingSkin, MAT.tailSkin, MAT.nacelle];
+    mats.forEach((m) => {
+      m.transparent = !!on;
+      m.opacity = on ? 0.2 : 1;
+      m.depthWrite = !on;
+      m.needsUpdate = true;
+    });
+    MAT.stripe.opacity = on ? 0.55 : 1;
+    MAT.stripe.transparent = !!on;
+    MAT.stripe.needsUpdate = true;
+    state.transparent = !!on;
+    const sw = $('swTransparent');
+    if (sw) { sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', String(!!on)); }
+    if (on && !silent) toast('透明蒙皮已启用');
+    updateModeLabelIfNeeded();
+  }
+
+  function setInternal(on, silent) {
+    state.internal = !!on;
+    if (groups.fuselageInternal) groups.fuselageInternal.visible = !!on;
+    if (groups.wingStructRight) groups.wingStructRight.visible = !!on;
+    if (groups.wingStructLeft) groups.wingStructLeft.visible = !!on;
+    const sw = $('swInternal');
+    if (sw) { sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', String(!!on)); }
+    if (on && !state.transparent) setTransparent(true, true);
+    if (on && !silent) toast('内部结构显示 · 机翼 / 机身承力构件');
+  }
+
+  function setCut(on, silent) {
+    state.cut = !!on;
+    clipPlane.constant = parseFloat($('cutRange').value || '0');
+    renderer.clippingPlanes = on ? [clipPlane] : [];
+    const sw = $('swCut');
+    if (sw) { sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', String(!!on)); }
+    $('cutRange').disabled = !on;
+    $('cutRow').style.opacity = on ? '1' : '.45';
+    if (on) {
+      setInternal(true, true);
+      if (!silent) toast('剖切模式 · 拖动滑块调整剖面位置');
+    }
+  }
+
+  function setExplode(pct, silent) {
+    const v = clamp(pct, 0, 100);
+    state.explodeTarget = v / 100;
+    const r = $('explodeRange');
+    if (r) r.value = String(Math.round(v));
+    const o = $('explodeVal');
+    if (o) o.textContent = Math.round(v) + '%';
+    if (v > 0 && state.mode !== 'explode' && !silent) {
+      updateNav('explode');
+      state.mode = 'explode';
+      updateModeUI();
+    }
+  }
+
+  function setDroop(angle) {
+    state.noseTarget = angle;
+    syncDroopButtons();
+    const label = angle === 0 ? '正常位置' : (angle === 5 ? '起飞 / 滑行位置' : '着陆位置');
+    toast('机头下垂至 ' + angle + '° · ' + label);
+  }
+
+  function syncDroopButtons() {
+    document.querySelectorAll('#droopSeg button').forEach((b) => {
+      b.classList.toggle('active', Math.abs(parseFloat(b.dataset.droop) - state.noseTarget) < 0.01);
+    });
+  }
+
+  function setGear(down) {
+    state.gearTarget = down ? 1 : 0;
+    syncGearButtons();
+    toast(down ? '起落架放下 · 收放动画中' : '起落架收起 · 收放动画中');
+  }
+
+  function syncGearButtons() {
+    $('btnGearDown').classList.toggle('active', state.gearTarget > 0.5);
+    $('btnGearUp').classList.toggle('active', state.gearTarget < 0.5);
+  }
+
+  function startEngines() {
+    state.engineOn = true;
+    state.rpmTarget = Math.max(0.94, state.rpmTarget);
+    if (state.mode !== 'engine' && !state.engineBenchOn) {
+      // visible startup through exhaust glow and N1 readout
+    }
+    syncEngineButtons();
+    toast('发动机启动 · N1 转速上升中（模拟）');
+  }
+
+  function stopEngines() {
+    state.engineOn = false;
+    state.rpmTarget = 0;
+    state.ab = false;
+    state.benchCut = state.benchCut;
+    syncEngineButtons();
+    toast('发动机停车 · N1 转速下降中（模拟）');
+  }
+
+  function toggleAfterburner() {
+    if (!state.engineOn || state.rpm < 0.35) {
+      toast('请先启动发动机，待 N1 转速建立后再开启加力');
+      return;
+    }
+    state.ab = !state.ab;
+    if (state.ab) state.rpmTarget = Math.max(state.rpmTarget, 0.98);
+    syncEngineButtons();
+    toast(state.ab ? '加力燃烧室点火 · 模拟推力增加' : '加力燃烧室关闭');
+  }
+
+  function syncEngineButtons() {
+    $('btnEngineStart').classList.toggle('active', state.engineOn);
+    $('btnEngineStop').classList.toggle('active', !state.engineOn);
+    $('btnAB').classList.toggle('active', state.ab);
+    $('btnAB').disabled = !state.engineOn;
+    const es = $('engState');
+    if (es) es.textContent = state.engineOn ? (state.ab ? 'AB ON' : 'RUNNING') : 'OFF';
+  }
+
+  function setPhase(key, auto) {
+    if (!PHASES[key]) return;
+    state.phase = key;
+    state.phaseTime = 0;
+    const p = PHASES[key];
+    state.engineOn = true;
+    state.rpmTarget = p.rpm;
+    state.ab = p.ab;
+    state.gearTarget = p.gear;
+    state.noseTarget = p.nose;
+    state.manual.pitch = 0;
+    state.manual.roll = 0;
+    state.manual.yaw = 0;
+    $('attPitch').value = '0'; $('attRoll').value = '0'; $('attYaw').value = '0';
+    $('attPitchVal').textContent = '0°'; $('attRollVal').textContent = '0°'; $('attYawVal').textContent = '0°';
+    if (!auto) {
+      state.demoPlaying = false;
+      updatePlayIcon();
+    }
+    syncGearButtons();
+    syncDroopButtons();
+    syncEngineButtons();
+    syncTimelineSegments();
+    updatePhaseUI();
+  }
+
+  function updatePhaseUI() {
+    const p = PHASES[state.phase];
+    $('phaseState').textContent = p.en;
+    $('phaseDesc').textContent = p.desc;
+    document.querySelectorAll('#phaseSeg button').forEach((b) => b.classList.toggle('active', b.dataset.phase === state.phase));
+  }
+
+  function syncTimelineSegments() {
+    document.querySelectorAll('#tlTrack .tl-seg').forEach((s) => s.classList.toggle('active', s.dataset.phase === state.phase));
+    updatePhaseUI();
+  }
+
+  function togglePlay() {
+    if (state.demoPlaying) {
+      state.demoPlaying = false;
+      updatePlayIcon();
+      toast('演示已暂停');
+      return;
+    }
+    if (!state.engineOn) {
+      state.engineOn = true;
+      state.rpmTarget = PHASES[state.phase].rpm;
+      state.ab = PHASES[state.phase].ab;
+    }
+    if (state.phase === 'landing' && state.phaseTime >= PHASES.landing.duration - 0.05) {
+      setPhase('ground', true);
+    }
+    state.demoPlaying = true;
+    updatePlayIcon();
+    updatePhaseUI();
+    toast('飞行演示开始 · 全部数据为模拟');
+  }
+
+  function updatePlayIcon() {
+    $('btnPlay').innerHTML = state.demoPlaying
+      ? '<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.4" height="8" rx=".5"/><rect x="6.1" y="1" width="2.4" height="8" rx=".5"/></svg>'
+      : '<svg viewBox="0 0 10 10" fill="currentColor"><path d="M1.5.8v8.4L9 5 1.5.8Z"/></svg>';
+    $('btnPlay').setAttribute('title', state.demoPlaying ? '暂停演示' : '播放完整飞行演示');
+  }
+
+  /* ============================================================
+     MODE / CAMERA / ENGINE BENCH
+  ============================================================ */
+  function enterEngineBench(withCamera) {
+    state.engineBenchOn = true;
+    aircraft.visible = false;
+    engineBench.visible = true;
+    if (groups.benchLabels) groups.benchLabels.visible = true;
+    groups.benchUpperShell.visible = !state.benchCut;
+    if (withCamera) flyTo(0.96, 1.1, 25, new T.Vector3(0, 0.35, 0), 1.0);
+    if ($('engineLegend')) $('engineLegend').style.display = 'block';
+    groups.benchLabels.visible = false;
+    selectPart('engine_bench');
+    updateModeUI();
+  }
+
+  function leaveEngineBench(withCamera) {
+    state.engineBenchOn = false;
+    aircraft.visible = true;
+    engineBench.visible = false;
+    if ($('engineLegend')) $('engineLegend').style.display = 'none';
+    clearSelection();
+    if (withCamera) resetView();
+    updateModeUI();
+  }
+
+  function resetScene() {
+    setTransparent(false, true);
+    setInternal(false, true);
+    setCut(false, true);
+    setExplode(0, true);
+    setDroop(0);
+    setGear(true);
+    stopEngines();
+    state.manual = { pitch: 0, roll: 0, yaw: 0 };
+    $('attPitch').value = '0'; $('attRoll').value = '0'; $('attYaw').value = '0';
+    $('attPitchVal').textContent = '0°'; $('attRollVal').textContent = '0°'; $('attYawVal').textContent = '0°';
+    state.demoPlaying = false;
+    state.phase = 'ground'; state.phaseTime = 0;
+    state.simSpeed = 0; state.simMach = 0; state.simAlt = 0; state.simPitch = 0; state.simRoll = 0; state.simYaw = 0;
+    aircraft.rotation.set(0, 0, 0);
+    aircraft.position.y = 0;
+    state.engineBenchOn = false;
+    aircraft.visible = true;
+    engineBench.visible = false;
+    setMode('overview', true);
+    state.phase = 'ground';
+    state.phaseTime = 0;
+    syncTimelineSegments();
+    clearSelection();
+    resetView();
+    updatePlayIcon();
+    updateReadouts();
+    toast('场景已恢复默认状态');
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const p = document.documentElement.requestFullscreen();
+      if (p && p.catch) p.catch(() => toast('浏览器未允许进入全屏，请手动使用 F11'));
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  function setPresentation(on) {
+    state.presentation = !!on;
+    document.body.classList.toggle('presentation', !!on);
+    state.autoRotate = !!on;
+    setTimeout(onResize, 80);
+    setTimeout(onResize, 420);
+    if (on) {
+      state.tween = null;
+      toast('演示模式 · ESC 或右上角按钮退出 · 拖动可查看');
+    } else {
+      toast('已退出演示模式');
+    }
+  }
+
+  /* ============================================================
+     TREE VISIBILITY
+  ============================================================ */
+  function toggleTreeVisibility(part, item) {
+    let objs = [];
+    if (part === 'aircraft') objs = [aircraft];
+    else if (part === 'fuselage') objs = [groups.fuselage];
+    else if (part === 'nose') objs = [groups.nose];
+    else if (part === 'wing') objs = [groups.wing];
+    else if (part === 'spar_main') objs = [groups.wingStructRight, groups.wingStructLeft];
+    else if (part === 'fin') objs = [groups.tail];
+    else if (part === 'nacelle') objs = groups.engines;
+    else if (part === 'gear_main') objs = groups.gear;
+    if (!objs.length) return;
+    const hide = !(objs[0].visible === false);
+    objs.forEach((o) => { o.visible = !hide; });
+    item.style.opacity = hide ? '.42' : '1';
+    toast((hide ? '已隐藏：' : '已显示：') + (PART_INFO[part] ? PART_INFO[part].title : part));
+    if (hide && state.selectedKey === part) clearSelection();
+  }
+
+  /* ============================================================
+     SELECTION / INFO
+  ============================================================ */
+  function setupSelection() {
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    setupCameraControls();
+  }
+
+  let drag = null;
+  const pointers = new Map();
+  let pinchDistance = 0;
+
+  function setupCameraControls() {
+    canvas.addEventListener('pointerdown', (e) => {
+      canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, button: e.button });
+      state.tween = null;
+      if (pointers.size === 1) {
+        drag = { id: e.pointerId, button: e.button, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: 0 };
+      } else if (pointers.size === 2) {
+        const p = Array.from(pointers.values());
+        pinchDistance = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        drag = null;
+      }
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!pointers.has(e.pointerId)) return;
+      const prev = pointers.get(e.pointerId);
+      const dx = e.clientX - prev.x;
+      const dy = e.clientY - prev.y;
+      prev.x = e.clientX; prev.y = e.clientY;
+
+      if (pointers.size >= 2) {
+        const p = Array.from(pointers.values());
+        const dist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        if (pinchDistance > 0) {
+          cameraState.radius = clamp(cameraState.radius * (pinchDistance / Math.max(1, dist)), 20, 220);
+          updateCamera();
+        }
+        pinchDistance = dist;
+        return;
+      }
+
+      if (!drag) return;
+      drag.moved += Math.abs(dx) + Math.abs(dy);
+      if (drag.button === 0) {
+        cameraState.theta -= dx * 0.0052;
+        cameraState.phi = clamp(cameraState.phi + dy * 0.0052, 0.055, Math.PI - 0.055);
+      } else {
+        const panScale = cameraState.radius * 0.0015;
+        const right = new T.Vector3().setFromMatrixColumn(camera.matrix, 0);
+        const up = new T.Vector3().setFromMatrixColumn(camera.matrix, 1);
+        cameraState.target.addScaledVector(right, -dx * panScale);
+        cameraState.target.addScaledVector(up, dy * panScale);
+        cameraState.target.y = clamp(cameraState.target.y, -8, 20);
+      }
+      updateCamera();
+    });
+
+    const end = (e) => {
+      if (!pointers.has(e.pointerId)) return;
+      const wasDrag = drag;
+      pointers.delete(e.pointerId);
+      if (pointers.size === 0) {
+        if (wasDrag && wasDrag.id === e.pointerId && wasDrag.button === 0 && wasDrag.moved < 5) {
+          const hit = pickAt(e.clientX, e.clientY);
+          if (hit) selectPart(hit.key, hit.mesh);
+          else clearSelection();
+        }
+        drag = null;
+        pinchDistance = 0;
+      }
+    };
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointercancel', end);
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = Math.exp(e.deltaY * 0.0012);
+      cameraState.radius = clamp(cameraState.radius * factor, 18, 230);
+      state.tween = null;
+      updateCamera();
+    }, { passive: false });
+  }
+
+  function pickAt(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const p = new T.Vector2();
+    p.x = ((clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
+    p.y = -((clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1;
+    const ray = new T.Raycaster();
+    ray.setFromCamera(p, camera);
+    const root = state.engineBenchOn ? engineBench : aircraft;
+    const hits = ray.intersectObjects([root], true);
+    for (const h of hits) {
+      let o = h.object;
+      if (!isVisibleInScene(o)) continue;
+      let key = null;
+      while (o && o !== scene) {
+        if (o.userData && o.userData.part) { key = o.userData.part; break; }
+        o = o.parent;
+      }
+      if (key) return { key: key, mesh: h.object };
+    }
+    return null;
+  }
+
+  function selectPart(key, mesh) {
+    if (!key || key === 'aircraft') {
+      clearSelection();
+      return;
+    }
+    if (['spar_main', 'spar_rear', 'ribs', 'stringers', 'fuselage_structure'].includes(key) && !state.internal) {
+      setInternal(true, true);
+    }
+    const info = PART_INFO[key] || {
+      code: 'AC-PART', title: key, en: 'Aircraft Component', desc: '该部件属于协和式三维工程示意模型。',
+      params: [['模型属性', '工程示意']]
+    };
+    state.selectedKey = key;
+    state.selected = mesh || null;
+
+    let targetMesh = mesh && mesh.isMesh ? mesh : null;
+    if (!targetMesh && partsIndex[key]) {
+      targetMesh = partsIndex[key].find((o) => o.isMesh && isVisibleInScene(o)) || null;
+    }
+    applyHighlight(targetMesh);
+
+    document.querySelectorAll('#structureTree .tree-item').forEach((i) => i.classList.toggle('selected', i.dataset.part === key));
+
+    const paramsHTML = (info.params || []).map((r) => `<div class="param-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('');
+    $('partInfo').innerHTML = `
+      <div class="part-kicker"><span>${info.code}</span><span class="sel-state">已选择 · SELECTED</span></div>
+      <div class="part-title">${info.title}</div>
+      <div class="part-en">${info.en}</div>
+      <p class="part-desc">${info.desc}</p>
+      <div class="param-title">Engineering Parameters · 工程参数</div>
+      <div class="param-list">${paramsHTML}</div>
+      <div class="param-title">Interaction · 交互</div>
+      <div class="param-list">
+        <div class="param-row"><span class="k">当前模式</span><span class="v">${MODE_LABELS[state.mode][1]}</span></div>
+        <div class="param-row"><span class="k">取消选择</span><span class="v">ESC / 点击空白处</span></div>
+      </div>
+      <button class="btn sm" id="btnClearSel" style="margin-top:11px;width:100%;">取消选择</button>
+      ${info.disclaimer ? '<div class="sim-flag">内部结构与外形为工程示意，非制造级 CAD 数据。</div>' : ''}
+    `;
+    const clearBtn = $('btnClearSel');
+    if (clearBtn) clearBtn.addEventListener('click', clearSelection);
+    setRightTab('info');
+    if (state.engineBenchOn && !state.benchCut) {
+      // keep cutaway visible while inspecting engine internals
+    }
+  }
+
+  function applyHighlight(mesh) {
+    clearHighlight();
+    if (!mesh || !mesh.isMesh) return;
+    highlightNode = new T.Mesh(mesh.geometry, MAT.highlight);
+    highlightNode.scale.setScalar(1.004);
+    highlightNode.raycast = function () {};
+    highlightNode.renderOrder = 12;
+    mesh.add(highlightNode);
+    try {
+      const eg = new T.EdgesGeometry(mesh.geometry, 35);
+      highlightEdge = new T.LineSegments(eg, MAT.highlightLine);
+      highlightEdge.scale.setScalar(1.006);
+      highlightEdge.raycast = function () {};
+      highlightEdge.renderOrder = 13;
+      mesh.add(highlightEdge);
+    } catch (err) {
+      highlightEdge = null;
+    }
+  }
+
+  function clearHighlight() {
+    if (highlightNode && highlightNode.parent) {
+      highlightNode.parent.remove(highlightNode);
+    }
+    if (highlightEdge && highlightEdge.parent) {
+      highlightEdge.parent.remove(highlightEdge);
+      if (highlightEdge.geometry) highlightEdge.geometry.dispose();
+    }
+    highlightNode = null;
+    highlightEdge = null;
+  }
+
+  function clearSelection() {
+    clearHighlight();
+    state.selected = null;
+    state.selectedKey = null;
+    $('partInfo').innerHTML = DEFAULT_INFO_HTML;
+    document.querySelectorAll('#structureTree .tree-item').forEach((i) => i.classList.toggle('selected', i.dataset.part === 'aircraft'));
+    const im = $('infoMode');
+    if (im) im.textContent = MODE_LABELS[state.mode][1];
+  }
+
+  function updateModeLabelIfNeeded() {
+    const im = $('infoMode');
+    if (im) im.textContent = MODE_LABELS[state.mode][1];
+  }
+
+  /* ============================================================
+     READOUTS
+  ============================================================ */
+  function fmt(n, d) { return Number(n).toFixed(d === undefined ? 0 : d); }
+
+  function currentElapsed() {
+    let acc = 0;
+    for (const k of PHASE_ORDER) {
+      if (k === state.phase) break;
+      acc += PHASES[k].duration;
+    }
+    return acc + clamp(state.phaseTime, 0, PHASES[state.phase].duration);
+  }
+
+  function timeStr(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function updateReadouts() {
+    const rpmPct = Math.round(state.rpm * 100);
+    $('rpmVal').textContent = rpmPct + '%';
+    $('rpmBar').style.width = rpmPct + '%';
+    $('noseState').textContent = fmt(state.noseCurrent, 1) + '°';
+    $('gearState').textContent = state.gearDeploy > 0.96 ? 'DOWN' : (state.gearDeploy < 0.04 ? 'UP' : 'TRANSIT');
+    $('gearState').classList.toggle('live', state.gearDeploy > 0.04 && state.gearDeploy < 0.96);
+    $('engState').textContent = state.engineOn ? (state.ab ? 'AB ON' : 'RUNNING') : 'OFF';
+    $('engState').classList.toggle('live', state.engineOn);
+    $('phaseState').textContent = PHASES[state.phase].en;
+    $('phaseDesc').textContent = PHASES[state.phase].desc;
+    $('dSpeed').textContent = fmt(state.simSpeed);
+    $('dMach').textContent = fmt(state.simMach, 2);
+    $('dAlt').textContent = fmt(state.simAlt);
+    $('dRpm').textContent = rpmPct;
+    $('dPitch').textContent = fmt(state.simPitch + state.manual.pitch, 1);
+    $('dRoll').textContent = fmt(state.simRoll + state.manual.roll, 1);
+    $('dYaw').textContent = fmt(state.simYaw + state.manual.yaw, 1);
+    $('dPhase').textContent = PHASES[state.phase].label;
+    $('dAb').textContent = state.ab && state.engineOn ? '开启 / ON' : '关闭 / OFF';
+    $('abBar').style.width = state.ab && state.engineOn ? '100%' : '0%';
+    $('dTime').textContent = timeStr(currentElapsed()) + ' / ' + timeStr(PHASE_TOTAL);
+    $('tlTime').textContent = timeStr(currentElapsed()) + ' / ' + timeStr(PHASE_TOTAL);
+    $('tlFill').style.width = (currentElapsed() / PHASE_TOTAL * 100).toFixed(2) + '%';
+    $('dEngine').textContent = state.engineOn ? (state.ab ? '运行 · 加力' : '运行') : '停车';
+    $('dNose').textContent = fmt(state.noseCurrent, 1) + '°';
+    $('dGear').textContent = state.gearDeploy > 0.96 ? '放下' : (state.gearDeploy < 0.04 ? '收起' : '收放中');
+    document.querySelectorAll('#phaseSeg button').forEach((b) => b.classList.toggle('active', b.dataset.phase === state.phase));
+    document.querySelectorAll('#tlTrack .tl-seg').forEach((s) => s.classList.toggle('active', s.dataset.phase === state.phase));
+    if ($('btnBenchCut')) {
+      $('btnBenchCut').classList.toggle('active', state.benchCut);
+      $('btnBenchCut').textContent = state.benchCut ? '剖面' : '完整';
+    }
+  }/* ============================================================
+     FLIGHT SIMULATION + ANIMATION
+  ============================================================ */
+  function updateSimulation(dt) {
+    const p = PHASES[state.phase];
+    const k = state.demoPlaying ? 2.0 : 1.25;
+    state.simSpeed = damp(state.simSpeed, p.speed, k, dt);
+    state.simMach = damp(state.simMach, p.mach, k, dt);
+    state.simAlt = damp(state.simAlt, p.alt, k * 0.7, dt);
+    state.simPitch = damp(state.simPitch, p.pitch, 1.6, dt);
+    state.simRoll = damp(state.simRoll, p.roll, 1.6, dt);
+    state.simYaw = damp(state.simYaw, p.yaw, 1.6, dt);
+
+    if (state.demoPlaying) {
+      state.phaseTime += dt;
+      if (state.phaseTime >= p.duration) {
+        const idx = PHASE_ORDER.indexOf(state.phase);
+        if (idx < PHASE_ORDER.length - 1) {
+          setPhase(PHASE_ORDER[idx + 1], true);
+        } else {
+          state.phaseTime = p.duration;
+          state.demoPlaying = false;
+          updatePlayIcon();
+          toast('飞行演示结束 · 全部数据为模拟输出');
+        }
+      }
+    }
+
+    const pitch = state.simPitch + state.manual.pitch;
+    const roll = state.simRoll + state.manual.roll;
+    const yaw = state.simYaw + state.manual.yaw;
+    aircraft.rotation.x = -pitch * D2R;
+    aircraft.rotation.z = roll * D2R;
+    aircraft.rotation.y = yaw * D2R;
+    const targetLift = state.phase === 'ground' ? 0 : 0.95;
+    aircraft.position.y = damp(aircraft.position.y, targetLift, 1.0, dt);
+  }
+
+  function updateScene(dt, time) {
+    // camera tween / presentation auto orbit
+    if (state.tween) {
+      const tw = state.tween;
+      tw.t = Math.min(1, tw.t + dt / tw.dur);
+      const e = smoothstep(0, 1, tw.t);
+      cameraState.theta = lerp(tw.from.theta, tw.to.theta, e);
+      cameraState.phi = lerp(tw.from.phi, tw.to.phi, e);
+      cameraState.radius = lerp(tw.from.radius, tw.to.radius, e);
+      cameraState.target.lerpVectors(tw.from.target, tw.to.target, e);
+      updateCamera();
+      if (tw.t >= 1) state.tween = null;
+    } else if (state.autoRotate && !drag) {
+      cameraState.theta += dt * 0.075;
+      updateCamera();
+    }
+
+    // exploded assembly, respecting spatial assembly relationships
+    state.explode = damp(state.explode, state.explodeTarget, 3.2, dt);
+    const ex = smoothstep(0, 1, clamp(state.explode, 0, 1));
+    for (let i = 0; i < explodeItems.length; i++) {
+      const it = explodeItems[i];
+      it.obj.position.copy(it.base).addScaledVector(it.offset, ex);
+    }
+
+    // nose droop actuator
+    state.noseCurrent = damp(state.noseCurrent, state.noseTarget, 3.8, dt);
+    groups.nose.rotation.x = state.noseCurrent * D2R;
+
+    // landing gear sequence
+    state.gearDeploy = damp(state.gearDeploy, state.gearTarget, 2.4, dt);
+    const gd = state.gearDeploy;
+    const fold = 1 - gd;
+    if (groups.gearMainRight) groups.gearMainRight.rotation.z = -1.34 * fold;
+    if (groups.gearMainLeft) groups.gearMainLeft.rotation.z = 1.34 * fold;
+    if (groups.gearNose) groups.gearNose.rotation.x = 1.52 * fold;
+
+    // engine spool
+    state.rpm = damp(state.rpm, state.rpmTarget, state.engineOn ? 1.45 : 1.8, dt);
+    const rpm = state.rpm;
+    const airActive = state.engineOn && rpm > 0.03;
+    if (groups.aircraftEngineRotors) {
+      groups.aircraftEngineRotors.forEach((r) => { r.rotation.z -= dt * (1.2 + rpm * 34); });
+    }
+    if (groups.benchCompressor) groups.benchCompressor.rotation.z -= dt * (1.5 + rpm * 42);
+    if (groups.benchTurbine) groups.benchTurbine.rotation.z += dt * (1.2 + rpm * 38);
+    if (groups.benchNozzle) {
+      const open = 0.85 + rpm * 0.12 + (state.ab ? 0.09 : 0);
+      groups.benchNozzle.children.forEach((p) => { p.rotation.x = 0.16 + (state.ab ? 0.06 : 0); });
+      groups.benchNozzle.scale.z = damp(groups.benchNozzle.scale.z, open, 2, dt);
+    }
+
+    const abActive = state.ab && state.engineOn && rpm > 0.28;
+    const flick = 0.78 + 0.16 * Math.sin(time * 39.0) + 0.08 * Math.sin(time * 71.0 + 1.7);
+    MAT.flame.opacity = abActive ? 0.9 * flick : 0;
+    MAT.flameCore.opacity = abActive ? 1.0 * flick : 0;
+    if (groups.aircraftFlames) groups.aircraftFlames.forEach((f, i) => {
+      f.visible = abActive && !state.engineBenchOn;
+      const wob = 0.96 + 0.07 * Math.sin(time * (29 + i * 6));
+      f.scale.x = wob;
+      f.scale.y = wob;
+      f.scale.z = 1.0 + 0.06 * Math.sin(time * 37 + i);
+    });
+
+    if (groups.benchGlow && groups.benchGlow.length >= 3) {
+      const comb = groups.benchGlow[0], abGlow = groups.benchGlow[1], abCore = groups.benchGlow[2];
+      comb.visible = airActive;
+      comb.material.opacity = airActive ? clamp(0.08 + rpm * 0.34, 0, 0.45) * (0.88 + 0.12 * Math.sin(time * 23)) : 0;
+      abGlow.visible = abActive;
+      abCore.visible = abActive;
+      abGlow.material.opacity = abActive ? 0.95 * flick : 0;
+      abCore.material.opacity = abActive ? 1.0 * flick : 0;
+      const wob = 0.96 + 0.06 * Math.sin(time * 32.0);
+      abGlow.scale.x = wob;
+      abGlow.scale.y = wob;
+      abCore.scale.x = 0.96 + 0.09 * Math.sin(time * 41.0);
+      abCore.scale.y = abCore.scale.x;
+    }
+
+    // airflow particles
+    if (groups.benchAir && groups.benchAir.visible) {
+      const posAttr = groups.benchAir.geometry.attributes.position;
+      const arr = posAttr.array;
+      const seeds = groups.airSeeds;
+      for (let i = 0; i < seeds.length; i++) {
+        const s = seeds[i];
+        s.z -= dt * (2.0 + rpm * 13.5) * s.speed;
+        if (s.z < -6.2) s.z = 5.9;
+        const ang = s.a + time * (0.3 + rpm * 0.9) * s.speed;
+        arr[i * 3] = Math.cos(ang) * s.r;
+        arr[i * 3 + 1] = Math.sin(ang) * s.r;
+        arr[i * 3 + 2] = s.z;
+      }
+      posAttr.needsUpdate = true;
+    }
+    if (groups.benchAir) {
+      groups.benchAir.visible = state.engineBenchOn && airActive;
+      MAT.air.opacity = state.engineBenchOn ? (airActive ? 0.2 + rpm * 0.55 : 0) : 0;
+    }
+
+    if (groups.benchArrows) {
+      groups.benchArrowGroup.visible = state.engineBenchOn && airActive;
+      if (airActive) {
+        groups.benchArrows.forEach((it) => {
+          it.z -= dt * (2.4 + rpm * 12) * it.speed;
+          if (it.z < -7.0) it.z = 6.4;
+          it.mesh.position.set(Math.cos(it.a) * it.r, Math.sin(it.a) * it.r, it.z);
+        });
+      }
+    }
+
+    updateSimulation(dt);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const now = performance.now();
+    const dt = Math.min(0.05, Math.max(0.0005, (now - lastFrameTime) / 1000));
+    lastFrameTime = now;
+    synthTime += dt;
+    updateScene(dt, synthTime);
+    if (now - uiClock > 100) {
+      uiClock = now;
+      updateReadouts();
+    }
+    renderer.render(scene, camera);
+  }
+
+  // Boot the renderer with a readable error if WebGL is not available.
+  try {
+    initThree();
+  } catch (err) {
+    console.error(err);
+    const le = $('loaderError');
+    if (le) {
+      le.classList.add('show');
+      le.textContent = '三维初始化失败：' + (err && err.message ? err.message : '未知错误') + '。请确认浏览器已启用硬件加速与 WebGL，并使用最新版 Chrome 或 Edge 打开本页面。';
+    }
+    const sub = $('loaderSub');
+    if (sub) sub.textContent = 'INITIALISATION FAILED';
+    const ring = document.querySelector('.loader-ring');
+    if (ring) ring.style.display = 'none';
+  }
+}
+</script>
+<script>
+(function () {
+  var urls = [
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
+    'https://unpkg.com/three@0.128.0/build/three.min.js'
+  ];
+  var sub = document.getElementById('loaderSub');
+  var errBox = document.getElementById('loaderError');
+  var title = document.querySelector('.loader-title');
+  var ring = document.querySelector('.loader-ring');
+  var done = false;
+
+  function fail(msg) {
+    if (done) return;
+    done = true;
+    if (ring) ring.style.display = 'none';
+    if (title) title.textContent = '三维场景加载失败';
+    if (sub) sub.textContent = 'THREE.JS CDN UNAVAILABLE';
+    if (errBox) {
+      errBox.classList.add('show');
+      errBox.textContent = msg + ' 本页面通过 CDN 在线加载 Three.js，首次运行需要网络连接。请检查网络后刷新；也可将 Three.js r128 下载到本地并修改页面底部脚本地址。';
+    }
+  }
+
+  function loadThree(i) {
+    if (done) return;
+    if (i >= urls.length) {
+      fail('无法从 CDN 加载 Three.js。');
+      return;
+    }
+    if (sub) sub.textContent = 'LOADING THREE.JS · CDN ' + (i + 1) + ' / ' + urls.length + '（需要网络连接）';
+    var s = document.createElement('script');
+    s.src = urls[i];
+    s.async = true;
+    s.onload = function () {
+      if (!window.THREE) { loadThree(i + 1); return; }
+      if (typeof window.__startApp !== 'function') {
+        fail('应用脚本未能正确初始化。');
+        return;
+      }
+      try {
+        window.__startApp();
+        done = true;
+      } catch (e) {
+        console.error(e);
+        fail('场景初始化异常：' + (e && e.message ? e.message : e));
+      }
+    };
+    s.onerror = function () { loadThree(i + 1); };
+    document.head.appendChild(s);
+  }
+
+  loadThree(0);
+})();
+</script>
+</body>
+</html>
